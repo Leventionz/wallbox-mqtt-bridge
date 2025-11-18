@@ -108,9 +108,10 @@ type Wallbox struct {
 	// one telemetry event and mapped it into RedisTelemetry. This lets higher
 	// layers prefer telemetry-based values on newer firmware while keeping a
 	// fallback to legacy Redis/M2W data for older firmware.
-	HasTelemetry bool
-	pubsub       *redis.PubSub
-	eventHandler func(channel string, message string)
+	HasTelemetry          bool
+	pubsub                *redis.PubSub
+	eventHandler          func(channel string, message string)
+	sessionEnergyBaseline float64
 }
 
 func New() *Wallbox {
@@ -449,7 +450,23 @@ func (w *Wallbox) S2Open() int {
 
 func (w *Wallbox) AddedEnergy() float64 {
 	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterEnergy != 0 {
-		return w.Data.RedisTelemetry.InternalMeterEnergy
+		status := int(w.Data.RedisTelemetry.StateMachine)
+		current := w.Data.RedisTelemetry.InternalMeterEnergy
+
+		if !isChargingTelemetryStatus(status) && current > 0 {
+			w.sessionEnergyBaseline = current
+			return 0
+		}
+
+		if w.sessionEnergyBaseline == 0 {
+			w.sessionEnergyBaseline = current
+		}
+
+		delta := current - w.sessionEnergyBaseline
+		if delta < 0 {
+			return 0
+		}
+		return delta
 	}
 	return w.Data.RedisState.ScheduleEnergy
 }

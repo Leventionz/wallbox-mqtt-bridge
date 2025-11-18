@@ -138,3 +138,7 @@ func describeTelemetryStatus(code int) string {
 
 	return "Unknown"
 }
+
+func isChargingTelemetryStatus(code int) bool {
+	return code == 193 || code == 194 || code == 195
+}
