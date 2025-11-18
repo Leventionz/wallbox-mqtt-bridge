@@ -26,7 +26,7 @@ Note: This fork is maintained at [Leventionz/wallbox-mqtt-bridge](https://github
 3. `ssh` to your Wallbox and run
 
 ```sh
-curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.4.12/install.sh > install.sh && bash install.sh
+curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.18.11/install.sh > install.sh && bash install.sh
 ```
 
 Note: To upgrade to new version, simply run the command from step 3 again.
