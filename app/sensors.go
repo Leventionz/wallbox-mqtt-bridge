@@ -76,9 +76,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_power": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line1Power + w.Data.RedisM2W.Line2Power + w.Data.RedisM2W.Line3Power)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingPower()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 100),
 			Config: map[string]string{
 				"name":                        "Charging power",
@@ -90,9 +88,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_power_l1": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line1Power)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingPowerL1()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 100),
 			Config: map[string]string{
 				"name":                        "Charging power L1",
@@ -104,9 +100,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_power_l2": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line2Power)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingPowerL2()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 100),
 			Config: map[string]string{
 				"name":                        "Charging power L2",
@@ -118,9 +112,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_power_l3": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line3Power)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingPowerL3()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 100),
 			Config: map[string]string{
 				"name":                        "Charging power L3",
@@ -132,9 +124,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_current_l1": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line1Current)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingCurrentL1()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 0.2),
 			Config: map[string]string{
 				"name":                        "Charging current L1",
@@ -146,9 +136,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_current_l2": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line2Current)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingCurrentL2()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 0.2),
 			Config: map[string]string{
 				"name":                        "Charging current L2",
@@ -160,9 +148,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"charging_current_l3": {
 			Component: "sensor",
-			Getter: func() string {
-				return fmt.Sprint(w.Data.RedisM2W.Line3Current)
-			},
+			Getter:    func() string { return fmt.Sprint(w.ChargingCurrentL3()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 0.2),
 			Config: map[string]string{
 				"name":                        "Charging current L3",
@@ -232,7 +218,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"temp_l1": {
 		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.Data.RedisM2W.TempL1) },
+		    Getter:    func() string { return fmt.Sprint(w.TemperatureL1()) },
 		    Config: map[string]string{
 			"name":                 "Temperature Line 1",
 			"unit_of_measurement":  "°C",
@@ -243,7 +229,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"temp_l2": {
 		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.Data.RedisM2W.TempL2) },
+		    Getter:    func() string { return fmt.Sprint(w.TemperatureL2()) },
 		    Config: map[string]string{
 			"name":                 "Temperature Line 2",
 			"unit_of_measurement":  "°C",
@@ -254,7 +240,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"temp_l3": {
 		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.Data.RedisM2W.TempL3) },
+		    Getter:    func() string { return fmt.Sprint(w.TemperatureL3()) },
 		    Config: map[string]string{
 			"name":                 "Temperature Line 3",
 			"unit_of_measurement":  "°C",

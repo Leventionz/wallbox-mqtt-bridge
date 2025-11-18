@@ -103,6 +103,11 @@ type Wallbox struct {
 	sqlClient    *sqlx.DB
 	Data         DataCache
 	ChargerType  string `db:"charger_type"`
+	// HasTelemetry becomes true once we have successfully processed at least
+	// one telemetry event and mapped it into RedisTelemetry. This lets higher
+	// layers prefer telemetry-based values on newer firmware while keeping a
+	// fallback to legacy Redis/M2W data for older firmware.
+	HasTelemetry bool
 	pubsub       *redis.PubSub
 	eventHandler func(channel string, message string)
 }
@@ -197,6 +202,119 @@ func (w *Wallbox) AvailableCurrent() int {
 	var availableCurrent int
 	w.sqlClient.QueryRow("SELECT `max_avbl_current` FROM `state_values` ORDER BY `id` DESC LIMIT 1").Scan(&availableCurrent)
 	return availableCurrent
+}
+
+// ChargingCurrentL1 returns the phase 1 charging current. On newer firmware
+// this is sourced from telemetry events; on older firmware it falls back to
+// the legacy m2w Redis hash.
+func (w *Wallbox) ChargingCurrentL1() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterCurrentL1 != 0 {
+		return w.Data.RedisTelemetry.InternalMeterCurrentL1
+	}
+	return w.Data.RedisM2W.Line1Current
+}
+
+// ChargingCurrentL2 returns the phase 2 charging current, using telemetry when
+// available and falling back to the legacy m2w Redis hash otherwise.
+func (w *Wallbox) ChargingCurrentL2() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterCurrentL2 != 0 {
+		return w.Data.RedisTelemetry.InternalMeterCurrentL2
+	}
+	return w.Data.RedisM2W.Line2Current
+}
+
+// ChargingCurrentL3 returns the phase 3 charging current, using telemetry when
+// available and falling back to the legacy m2w Redis hash otherwise.
+func (w *Wallbox) ChargingCurrentL3() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterCurrentL3 != 0 {
+		return w.Data.RedisTelemetry.InternalMeterCurrentL3
+	}
+	return w.Data.RedisM2W.Line3Current
+}
+
+// linePowerFromTelemetry derives per‑phase power from internal meter voltage
+// and current telemetry values. This is primarily used on newer firmware where
+// legacy m2w per‑phase power may no longer be populated.
+func linePowerFromTelemetry(voltage, current float64) float64 {
+	if voltage == 0 || current == 0 {
+		return 0
+	}
+	return voltage * current
+}
+
+// ChargingPowerL1 returns per‑phase power for L1. On newer firmware we derive
+// this from internal meter telemetry, otherwise we fall back to legacy m2w
+// power values.
+func (w *Wallbox) ChargingPowerL1() float64 {
+	if w.HasTelemetry &&
+		(w.Data.RedisTelemetry.InternalMeterVoltageL1 != 0 ||
+			w.Data.RedisTelemetry.InternalMeterCurrentL1 != 0) {
+		return linePowerFromTelemetry(
+			w.Data.RedisTelemetry.InternalMeterVoltageL1,
+			w.Data.RedisTelemetry.InternalMeterCurrentL1,
+		)
+	}
+	return w.Data.RedisM2W.Line1Power
+}
+
+// ChargingPowerL2 returns per‑phase power for L2. See ChargingPowerL1 for
+// details.
+func (w *Wallbox) ChargingPowerL2() float64 {
+	if w.HasTelemetry &&
+		(w.Data.RedisTelemetry.InternalMeterVoltageL2 != 0 ||
+			w.Data.RedisTelemetry.InternalMeterCurrentL2 != 0) {
+		return linePowerFromTelemetry(
+			w.Data.RedisTelemetry.InternalMeterVoltageL2,
+			w.Data.RedisTelemetry.InternalMeterCurrentL2,
+		)
+	}
+	return w.Data.RedisM2W.Line2Power
+}
+
+// ChargingPowerL3 returns per‑phase power for L3. See ChargingPowerL1 for
+// details.
+func (w *Wallbox) ChargingPowerL3() float64 {
+	if w.HasTelemetry &&
+		(w.Data.RedisTelemetry.InternalMeterVoltageL3 != 0 ||
+			w.Data.RedisTelemetry.InternalMeterCurrentL3 != 0) {
+		return linePowerFromTelemetry(
+			w.Data.RedisTelemetry.InternalMeterVoltageL3,
+			w.Data.RedisTelemetry.InternalMeterCurrentL3,
+		)
+	}
+	return w.Data.RedisM2W.Line3Power
+}
+
+// ChargingPower returns total charging power across all phases.
+func (w *Wallbox) ChargingPower() float64 {
+	return w.ChargingPowerL1() + w.ChargingPowerL2() + w.ChargingPowerL3()
+}
+
+// TemperatureL1 returns the line 1 temperature, preferring telemetry values
+// when available and otherwise falling back to legacy m2w data.
+func (w *Wallbox) TemperatureL1() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.TempL1 != 0 {
+		return w.Data.RedisTelemetry.TempL1
+	}
+	return w.Data.RedisM2W.TempL1
+}
+
+// TemperatureL2 returns the line 2 temperature, preferring telemetry values
+// when available and otherwise falling back to legacy m2w data.
+func (w *Wallbox) TemperatureL2() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.TempL2 != 0 {
+		return w.Data.RedisTelemetry.TempL2
+	}
+	return w.Data.RedisM2W.TempL2
+}
+
+// TemperatureL3 returns the line 3 temperature, preferring telemetry values
+// when available and otherwise falling back to legacy m2w data.
+func (w *Wallbox) TemperatureL3() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.TempL3 != 0 {
+		return w.Data.RedisTelemetry.TempL3
+	}
+	return w.Data.RedisM2W.TempL3
 }
 
 func sendToPosixQueue(path, data string) {
@@ -360,6 +478,9 @@ func (w *Wallbox) updateTelemetryField(sensorID string, value float64) {
 		
 		// Check if this field's redis tag matches our telemetry key
 		if redisTag == "telemetry."+sensorID {
+			// Mark that we have seen at least one mapped telemetry sample so
+			// higher‑level code can choose telemetry-backed values.
+			w.HasTelemetry = true
 			// Make sure the field is settable
 			if v.Field(i).CanSet() {
 				v.Field(i).SetFloat(value)
