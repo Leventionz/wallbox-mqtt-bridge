@@ -52,13 +52,13 @@ type DataCache struct {
 	}
 
 	RedisTelemetry struct {
-		ICPMaxCurrent                    float64 `redis:"telemetry.SENSOR_ICP_MAX_CURRENT"`
-		InternalMeterCurrentL1           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L1"`
-		InternalMeterCurrentL2           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L2"`
-		InternalMeterCurrentL3           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L3"`
-		MaxAvailableCurrent              float64 `redis:"telemetry.SENSOR_MAX_AVAILABLE_CURRENT"`
-		UserCurrentProposal              float64 `redis:"telemetry.SENSOR_USER_CURRENT_PROPOSAL"`
-		DynamicPowerSharingMaxCurrent    float64 `redis:"telemetry.SENSOR_DYNAMIC_POWER_SHARING_MAX_CURRENT"`
+		ICPMaxCurrent                 float64 `redis:"telemetry.SENSOR_ICP_MAX_CURRENT"`
+		InternalMeterCurrentL1        float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L1"`
+		InternalMeterCurrentL2        float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L2"`
+		InternalMeterCurrentL3        float64 `redis:"telemetry.SENSOR_INTERNAL_METER_CURRENT_L3"`
+		MaxAvailableCurrent           float64 `redis:"telemetry.SENSOR_MAX_AVAILABLE_CURRENT"`
+		UserCurrentProposal           float64 `redis:"telemetry.SENSOR_USER_CURRENT_PROPOSAL"`
+		DynamicPowerSharingMaxCurrent float64 `redis:"telemetry.SENSOR_DYNAMIC_POWER_SHARING_MAX_CURRENT"`
 
 		InternalMeterVoltageL1           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_VOLTAGE_L1"`
 		InternalMeterVoltageL2           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_VOLTAGE_L2"`
@@ -67,42 +67,43 @@ type DataCache struct {
 		ControlPilotHighVolts            float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_HIGH_TENTHS_OF_VOLTS"`
 		ControlPilotLowVolts             float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_LOW_TENTHS_OF_VOLTS"`
 
-		InternalMeterEnergy              float64 `redis:"telemetry.SENSOR_INTERNAL_METER_ENERGY"`
-		EcosmartGreenEnergy              float64 `redis:"telemetry.SENSOR_ECOSMART_GREEN_ENERGY"`
-		EcosmartEnergyTotal              float64 `redis:"telemetry.SENSOR_ECOSMART_ENERGY_TOTAL"`
+		InternalMeterEnergy float64 `redis:"telemetry.SENSOR_INTERNAL_METER_ENERGY"`
+		EcosmartGreenEnergy float64 `redis:"telemetry.SENSOR_ECOSMART_GREEN_ENERGY"`
+		EcosmartEnergyTotal float64 `redis:"telemetry.SENSOR_ECOSMART_ENERGY_TOTAL"`
 
-		EcosmartMode                     float64 `redis:"telemetry.SENSOR_ECOSMART_MODE"`
-		EcosmartStatus                   float64 `redis:"telemetry.SENSOR_ECOSMART_STATUS"`
-		EcosmartCurrentProposal          float64 `redis:"telemetry.SENSOR_ECOSMART_CURRENT_PROPOSAL"`
+		EcosmartMode            float64 `redis:"telemetry.SENSOR_ECOSMART_MODE"`
+		EcosmartStatus          float64 `redis:"telemetry.SENSOR_ECOSMART_STATUS"`
+		EcosmartCurrentProposal float64 `redis:"telemetry.SENSOR_ECOSMART_CURRENT_PROPOSAL"`
 
-		InternalMeterFrequency           float64 `redis:"telemetry.SENSOR_INTERNAL_METER_FREQUENCY"`
+		InternalMeterFrequency float64 `redis:"telemetry.SENSOR_INTERNAL_METER_FREQUENCY"`
 
-		ScheduleStatus                   float64 `redis:"telemetry.SENSOR_SCHEDULE_STATUS"`
-		ScheduleCurrentProposal          float64 `redis:"telemetry.SENSOR_SCHEDULE_CURRENT_PROPOSAL"`
-		PowerboostStatus                 float64 `redis:"telemetry.SENSOR_DCA_POWERBOOST_STATUS"`
-		PowerboostProposalCurrent        float64 `redis:"telemetry.SENSOR_POWERBOOST_PROPOSAL_CURRENT"`
-		
+		ScheduleStatus            float64 `redis:"telemetry.SENSOR_SCHEDULE_STATUS"`
+		ScheduleCurrentProposal   float64 `redis:"telemetry.SENSOR_SCHEDULE_CURRENT_PROPOSAL"`
+		PowerboostStatus          float64 `redis:"telemetry.SENSOR_DCA_POWERBOOST_STATUS"`
+		PowerboostProposalCurrent float64 `redis:"telemetry.SENSOR_POWERBOOST_PROPOSAL_CURRENT"`
+
 		// Additional fields referenced in getTelemetryEventEntities
-		ChargingEnable                   float64 `redis:"telemetry.SENSOR_CHARGING_ENABLE"`
-		ControlPilotDuty                 float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_DUTY"`
-		ControlPilotStatus               float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_STATUS"`
-		MaxChargingCurrent               float64 `redis:"telemetry.SENSOR_MAX_CHARGING_CURRENT"`
-		MidStatus                        float64 `redis:"telemetry.SENSOR_MID_STATUS"`
-		PowerSharingStatus               float64 `redis:"telemetry.SENSOR_POWER_SHARING_STATUS"`
-		TempL1                           float64 `redis:"telemetry.SENSOR_TEMP_L1"`
-		TempL2                           float64 `redis:"telemetry.SENSOR_TEMP_L2"`
-		TempL3                           float64 `redis:"telemetry.SENSOR_TEMP_L3"`
-		Welding                          float64 `redis:"telemetry.SENSOR_WELDING"`
-		FirmwareError                    float64 `redis:"telemetry.SENSOR_FIRMWARE_ERROR"`
-		PowerRelayManagementCommand      float64 `redis:"telemetry.SENSOR_POWER_RELAY_MANAGEMENT_COMMAND"`
+		ChargingEnable              float64 `redis:"telemetry.SENSOR_CHARGING_ENABLE"`
+		ControlPilotDuty            float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_DUTY"`
+		ControlPilotStatus          float64 `redis:"telemetry.SENSOR_CONTROL_PILOT_STATUS"`
+		MaxChargingCurrent          float64 `redis:"telemetry.SENSOR_MAX_CHARGING_CURRENT"`
+		MidStatus                   float64 `redis:"telemetry.SENSOR_MID_STATUS"`
+		PowerSharingStatus          float64 `redis:"telemetry.SENSOR_POWER_SHARING_STATUS"`
+		TempL1                      float64 `redis:"telemetry.SENSOR_TEMP_L1"`
+		TempL2                      float64 `redis:"telemetry.SENSOR_TEMP_L2"`
+		TempL3                      float64 `redis:"telemetry.SENSOR_TEMP_L3"`
+		Welding                     float64 `redis:"telemetry.SENSOR_WELDING"`
+		FirmwareError               float64 `redis:"telemetry.SENSOR_FIRMWARE_ERROR"`
+		PowerRelayManagementCommand float64 `redis:"telemetry.SENSOR_POWER_RELAY_MANAGEMENT_COMMAND"`
+		StateMachine                float64 `redis:"telemetry.SENSOR_STATE_MACHINE"`
 	}
 }
 
 type Wallbox struct {
-	redisClient  *redis.Client
-	sqlClient    *sqlx.DB
-	Data         DataCache
-	ChargerType  string `db:"charger_type"`
+	redisClient *redis.Client
+	sqlClient   *sqlx.DB
+	Data        DataCache
+	ChargerType string `db:"charger_type"`
 	// HasTelemetry becomes true once we have successfully processed at least
 	// one telemetry event and mapped it into RedisTelemetry. This lets higher
 	// layers prefer telemetry-based values on newer firmware while keeping a
@@ -181,7 +182,7 @@ func (w *Wallbox) RefreshData() {
 		"    `power_outage_values`," +
 		"    (SELECT * FROM `session` ORDER BY `id` DESC LIMIT 1) AS latest_session"
 	w.sqlClient.Get(&w.Data.SQL, query)
-	
+
 	// We no longer need to refresh telemetry data from Redis
 	// The telemetry data comes directly from Redis subscriptions and is stored only in memory
 }
@@ -364,6 +365,14 @@ func (w *Wallbox) SetHaloBrightness(brightness int) {
 }
 
 func (w *Wallbox) CableConnected() int {
+	if w.HasTelemetry {
+		status := int(w.Data.RedisTelemetry.ControlPilotStatus)
+		if describeTelemetryStatus(status) != "Disconnected" {
+			return 1
+		}
+		return 0
+	}
+
 	if w.Data.RedisM2W.ChargerStatus == 0 || w.Data.RedisM2W.ChargerStatus == 6 {
 		return 0
 	}
@@ -371,6 +380,10 @@ func (w *Wallbox) CableConnected() int {
 }
 
 func (w *Wallbox) EffectiveStatus() string {
+	if w.HasTelemetry && w.Data.RedisTelemetry.StateMachine != 0 {
+		return describeTelemetryStatus(int(w.Data.RedisTelemetry.StateMachine))
+	}
+
 	tmsStatus := w.Data.RedisM2W.ChargerStatus
 	state := w.Data.RedisState.SessionState
 
@@ -378,15 +391,57 @@ func (w *Wallbox) EffectiveStatus() string {
 		tmsStatus = override
 	}
 
-	return wallboxStatusCodes[tmsStatus]
+	if tmsStatus >= 0 && tmsStatus < len(wallboxStatusCodes) {
+		return wallboxStatusCodes[tmsStatus]
+	}
+
+	return "Unknown"
 }
 
 func (w *Wallbox) ControlPilotStatus() string {
-	return fmt.Sprintf("%d: %s", w.Data.RedisState.ControlPilot, controlPilotStates[w.Data.RedisState.ControlPilot])
+	if w.HasTelemetry && w.Data.RedisTelemetry.ControlPilotStatus != 0 {
+		status := int(w.Data.RedisTelemetry.ControlPilotStatus)
+		return fmt.Sprintf("%d: %s", status, describeTelemetryStatus(status))
+	}
+
+	if desc, ok := controlPilotStates[w.Data.RedisState.ControlPilot]; ok {
+		return fmt.Sprintf("%d: %s", w.Data.RedisState.ControlPilot, desc)
+	}
+	return fmt.Sprintf("%d: Unknown", w.Data.RedisState.ControlPilot)
 }
 
 func (w *Wallbox) StateMachineState() string {
-	return fmt.Sprintf("%d: %s", w.Data.RedisState.SessionState, stateMachineStates[w.Data.RedisState.SessionState])
+	if w.HasTelemetry && w.Data.RedisTelemetry.StateMachine != 0 {
+		status := int(w.Data.RedisTelemetry.StateMachine)
+		return fmt.Sprintf("%d: %s", status, describeTelemetryStatus(status))
+	}
+
+	if desc, ok := stateMachineStates[w.Data.RedisState.SessionState]; ok {
+		return fmt.Sprintf("%d: %s", w.Data.RedisState.SessionState, desc)
+	}
+
+	return fmt.Sprintf("%d: Unknown", w.Data.RedisState.SessionState)
+}
+
+func (w *Wallbox) ChargingEnable() int {
+	if w.HasTelemetry && w.Data.RedisTelemetry.ChargingEnable != 0 {
+		return int(w.Data.RedisTelemetry.ChargingEnable)
+	}
+	return w.Data.SQL.ChargingEnable
+}
+
+func (w *Wallbox) S2Open() int {
+	if w.HasTelemetry {
+		status := int(w.Data.RedisTelemetry.ControlPilotStatus)
+		if status != 0 {
+			if describeTelemetryStatus(status) == "Charging" {
+				return 0
+			}
+			return 1
+		}
+	}
+
+	return w.Data.RedisState.S2open
 }
 
 func (w *Wallbox) SetEventHandler(handler func(channel string, message string)) {
@@ -424,7 +479,7 @@ func (w *Wallbox) StopRedisSubscriptions() {
 // StartTimeConstrRedisSubscriptions starts Redis subscriptions and automatically stops them after the specified duration
 func (w *Wallbox) StartTimeConstrainedRedisSubscriptions(duration time.Duration) {
 	w.StartRedisSubscriptions()
-	
+
 	// Set up a timer to stop the subscription after the specified duration
 	time.AfterFunc(duration, func() {
 		log.Printf("Subscription time limit of %v reached. Stopping subscriptions...", duration)
@@ -436,10 +491,10 @@ func (w *Wallbox) StartTimeConstrainedRedisSubscriptions(duration time.Duration)
 type TelemetryEvent struct {
 	Body struct {
 		Sensors []struct {
-			ID        string    `json:"id"`
-			Metadata  []string  `json:"metadata"`
-			Timestamp string    `json:"timestamp"`
-			Value     float64   `json:"value"`
+			ID        string   `json:"id"`
+			Metadata  []string `json:"metadata"`
+			Timestamp string   `json:"timestamp"`
+			Value     float64  `json:"value"`
 		} `json:"sensors"`
 	} `json:"body"`
 	Header struct {
@@ -470,12 +525,12 @@ func (w *Wallbox) updateTelemetryField(sensorID string, value float64) {
 	// Use reflection to update the appropriate field in the RedisTelemetry struct
 	v := reflect.ValueOf(&w.Data.RedisTelemetry).Elem()
 	t := v.Type()
-	
+
 	// Iterate through struct fields to find the matching one
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
 		redisTag := field.Tag.Get("redis")
-		
+
 		// Check if this field's redis tag matches our telemetry key
 		if redisTag == "telemetry."+sensorID {
 			// Mark that we have seen at least one mapped telemetry sample so

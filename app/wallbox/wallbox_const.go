@@ -89,3 +89,42 @@ var controlPilotStates = map[int]string{
 	0xC1: "Charging 1",
 	0xC2: "Charging 2", // S2 closed
 }
+
+var telemetryStatusDescriptions = map[int]string{
+	0:   "Disconnected",
+	14:  "Error",
+	15:  "Error",
+	161: "Ready",
+	162: "Ready",
+	163: "Disconnected",
+	164: "Waiting",
+	165: "Locked",
+	166: "Updating",
+	177: "Scheduled",
+	178: "Paused",
+	179: "Scheduled",
+	180: "Waiting",
+	181: "Waiting",
+	182: "Paused",
+	183: "Waiting",
+	184: "Waiting",
+	185: "Waiting",
+	186: "Waiting",
+	187: "Waiting",
+	188: "Waiting",
+	189: "Waiting",
+	193: "Charging",
+	194: "Charging",
+	195: "Charging",
+	196: "Discharging",
+	209: "Locked",
+	210: "Locked",
+}
+
+func describeTelemetryStatus(code int) string {
+	if desc, ok := telemetryStatusDescriptions[code]; ok {
+		return desc
+	}
+
+	return "Unknown"
+}
