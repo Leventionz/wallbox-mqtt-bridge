@@ -90,6 +90,16 @@ var controlPilotStates = map[int]string{
 	0xC2: "Charging 2", // S2 closed
 }
 
+var telemetryControlPilotStates = map[int]string{
+	161: "Ready 1",
+	162: "Ready 2",
+	177: "Connected 1",
+	178: "Connected 2",
+	193: "Charging 1",
+	194: "Charging 2",
+	195: "Charging 2",
+}
+
 var telemetryStatusDescriptions = map[int]string{
 	0:   "Disconnected",
 	14:  "Error",

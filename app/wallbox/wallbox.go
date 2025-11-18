@@ -401,6 +401,9 @@ func (w *Wallbox) EffectiveStatus() string {
 func (w *Wallbox) ControlPilotStatus() string {
 	if w.HasTelemetry && w.Data.RedisTelemetry.ControlPilotStatus != 0 {
 		status := int(w.Data.RedisTelemetry.ControlPilotStatus)
+		if desc, ok := telemetryControlPilotStates[status]; ok {
+			return fmt.Sprintf("%d: %s", status, desc)
+		}
 		return fmt.Sprintf("%d: %s", status, describeTelemetryStatus(status))
 	}
 
@@ -442,6 +445,13 @@ func (w *Wallbox) S2Open() int {
 	}
 
 	return w.Data.RedisState.S2open
+}
+
+func (w *Wallbox) AddedEnergy() float64 {
+	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterEnergy != 0 {
+		return w.Data.RedisTelemetry.InternalMeterEnergy
+	}
+	return w.Data.RedisState.ScheduleEnergy
 }
 
 func (w *Wallbox) SetEventHandler(handler func(channel string, message string)) {

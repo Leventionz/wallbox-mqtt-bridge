@@ -30,7 +30,7 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 	return map[string]Entity{
 		"added_energy": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisState.ScheduleEnergy) },
+			Getter:    func() string { return fmt.Sprint(w.AddedEnergy()) },
 			RateLimit: ratelimit.NewDeltaRateLimit(10, 50),
 			Config: map[string]string{
 				"name":                        "Added energy",
@@ -217,38 +217,38 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 			},
 		},
 		"temp_l1": {
-		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.TemperatureL1()) },
-		    Config: map[string]string{
-			"name":                 "Temperature Line 1",
-			"unit_of_measurement":  "°C",
-			"device_class":         "temperature",
-			"state_class":          "measurement",
-			"suggested_display_precision": "1",
-		    },
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.TemperatureL1()) },
+			Config: map[string]string{
+				"name":                        "Temperature Line 1",
+				"unit_of_measurement":         "°C",
+				"device_class":                "temperature",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+			},
 		},
 		"temp_l2": {
-		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.TemperatureL2()) },
-		    Config: map[string]string{
-			"name":                 "Temperature Line 2",
-			"unit_of_measurement":  "°C",
-			"device_class":         "temperature",
-			"state_class":          "measurement",
-			"suggested_display_precision": "1",
-		    },
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.TemperatureL2()) },
+			Config: map[string]string{
+				"name":                        "Temperature Line 2",
+				"unit_of_measurement":         "°C",
+				"device_class":                "temperature",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+			},
 		},
 		"temp_l3": {
-		    Component: "sensor",
-		    Getter:    func() string { return fmt.Sprint(w.TemperatureL3()) },
-		    Config: map[string]string{
-			"name":                 "Temperature Line 3",
-			"unit_of_measurement":  "°C",
-			"device_class":         "temperature",
-			"state_class":          "measurement",
-			"suggested_display_precision": "1",
-		    },
-		},		
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.TemperatureL3()) },
+			Config: map[string]string{
+				"name":                        "Temperature Line 3",
+				"unit_of_measurement":         "°C",
+				"device_class":                "temperature",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+			},
+		},
 	}
 }
 
@@ -471,7 +471,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// Voltage Related
 		"internal_meter_voltage_l1": {
 			Component: "sensor",
@@ -536,7 +536,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// Energy Related
 		"internal_meter_energy": {
 			Component: "sensor",
@@ -575,7 +575,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// System Status
 		"ecosmart_mode": {
 			Component: "sensor",
@@ -608,7 +608,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// Frequency
 		"internal_meter_frequency": {
 			Component: "sensor",
@@ -622,7 +622,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// Schedule and PowerBoost
 		"schedule_status": {
 			Component: "sensor",
@@ -666,7 +666,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		
+
 		// New sensors from JSON data
 		"charging_enable_sensor": {
 			Component: "binary_sensor",
@@ -834,6 +834,6 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 			},
 		},
 	}
-	
+
 	return entities
 }
