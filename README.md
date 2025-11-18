@@ -2,7 +2,7 @@
 
 This open-source project connects your Wallbox fully locally to Home Assistant, providing you with unparalleled speed and reliability.
 
-Note: This Does work with firmware > v6.6.x but is still being tested
+Note: This fork is maintained at [Leventionz/wallbox-mqtt-bridge](https://github.com/Leventionz/wallbox-mqtt-bridge) and includes the telemetry-backed fixes required for firmware 6.7.x and newer.
 
 ## Features
 
@@ -26,10 +26,17 @@ Note: This Does work with firmware > v6.6.x but is still being tested
 3. `ssh` to your Wallbox and run
 
 ```sh
-curl -sSfL https://github.com/jethrovo/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.4.12/install.sh > install.sh && bash install.sh
+curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.4.12/install.sh > install.sh && bash install.sh
 ```
 
 Note: To upgrade to new version, simply run the command from step 3 again.
+
+## Firmware 6.7.x support
+
+- Firmware 6.7.x stops populating the legacy `m2w` Redis hashes for per-phase power, current, and temperatures.  
+- This fork now taps into the Wallbox telemetry Redis channel (`/wbx/telemetry/events`) and maps those live sensor readings back into the existing Home Assistant entities.  
+- No Home Assistant reconfiguration is required: the standard `charging_power*`, `charging_current*`, and `temp_l*` sensors now automatically emit the telemetry values (while older firmware still uses the legacy data paths).  
+- If you update your Wallbox beyond 6.7.x, simply redeploy using the installer command above to keep the telemetry fixes in place.
 
 ## Acknowledgments
 
