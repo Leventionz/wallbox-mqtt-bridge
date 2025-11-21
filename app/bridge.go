@@ -26,7 +26,7 @@ var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err
 func RunBridge(configPath string) {
 	c := LoadConfig(configPath)
 	if c.Settings.OCPPMismatchSeconds == 0 {
-		c.Settings.OCPPMismatchSeconds = 30
+		c.Settings.OCPPMismatchSeconds = 60
 	}
 	if c.Settings.OCPPRestartCooldown == 0 {
 		c.Settings.OCPPRestartCooldown = 600

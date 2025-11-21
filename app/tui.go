@@ -49,7 +49,7 @@ func RunTuiSetup() {
 	config.Settings.DebugSensors = false
 	config.Settings.PowerBoostEnabled = false
 	config.Settings.AutoRestartOCPP = false
-	config.Settings.OCPPMismatchSeconds = 30
+	config.Settings.OCPPMismatchSeconds = 60
 	config.Settings.OCPPRestartCooldown = 600
 
 	askConfirmOrNew(&config.MQTT.Host, "MQTT Host")

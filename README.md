@@ -69,7 +69,7 @@ The installer (or `./bridge --config`) can auto-populate these settings:
 ```ini
 [settings]
 auto_restart_ocpp = true
-ocpp_mismatch_seconds = 30            # how long the mismatch must persist
+ocpp_mismatch_seconds = 60            # how long the mismatch must persist
 ocpp_restart_cooldown_seconds = 600   # wait time between restarts
 ```
 
