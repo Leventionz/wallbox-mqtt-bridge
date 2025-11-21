@@ -32,7 +32,7 @@ if 'settings' not in cfg:
 for i in range(0, len(args), 2):
     cfg['settings'][args[i]] = args[i + 1]
 
-with open(path, 'w') as fh:
+with path.open('w') as fh:
     cfg.write(fh)
 PY
 }
