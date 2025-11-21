@@ -26,16 +26,24 @@ This open-source project connects your Wallbox fully locally to Home Assistant, 
 3. `ssh` to your Wallbox and run
 
 ```sh
-curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.18.11/install.sh > install.sh && bash install.sh
+curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.11.21/install.sh > install.sh && bash install.sh
 ```
 
 Note: To upgrade to new version, simply run the command from step 3 again.
+
+> Tip: set `BRIDGE_VERSION=<tag>` in front of the command if you want to pin a different release (e.g. testing a prerelease build).
+
+## EVCC quickstart
+
+- The installer now asks whether you want an EVCC helper file.
+- Answer `y` and it will auto-detect your Wallbox serial (or prompt for it) and drop `~/mqtt-bridge/evcc-wallbox.yaml` containing the proper `meters`, `chargers`, and `loadpoints` sections.
+- Copy that snippet into your EVCC config and adjust MQTT broker credentials on the EVCC side—topics already match the bridge’s Home Assistant entities.
 
 ## Firmware 6.7.x support
 
 | Area | Behaviour on 6.7.x | Notes / fallback |
 | --- | --- | --- |
-| **Control pilot** | Telemetry control-pilot codes (161, 162, 177, 178, 193, 194, 195) drive `sensor.wallbox_control_pilot` and `binary_sensor.wallbox_cable_connected`. The raw code is shown as “Ready 1”, “Connected 2”, “Charging 1/2” just like SAE J1772. | Falls back to `state.ctrlPilot` on older firmware. |
+| **Control pilot** | Telemetry control-pilot codes (161, 162, 177, 178, 193, 194, 195) drive `sensor.wallbox_control_pilot` **and** `binary_sensor.wallbox_cable_connected`. State A (≈ 12 V) now reports “disconnected”, while States B/C (≈ 9 V / 6 V) report “connected/charging”, matching SAE J1772 in Home Assistant. | Falls back to `state.ctrlPilot` on older firmware. |
 | **State machine / status** | Telemetry `SENSOR_STATE_MACHINE` feeds `sensor.wallbox_state_machine`, `sensor.wallbox_status`, and the debug `sensor.wallbox_m2w_status`. Every code in the official Wallbox enum (Waiting, Scheduled, Paused, Charging, Locked, Updating, etc.) is mapped to a friendly string. | Falls back to the legacy `m2w/state` hashes and existing override tables automatically. |
 | **Session energy** | `sensor.wallbox_added_energy` now tracks a telemetry baseline and reports **session** Wh (Internal Meter Energy – baseline) while `sensor.wallbox_cumulative_added_energy` remains the total. | Baseline resets whenever telemetry reports a non-charging state; older firmware continues to use `scheduleEnergy`. |
 | **S2 relay** | `sensor.wallbox_s2_open` is derived from control-pilot telemetry (S2 is “closed” only while telemetry reports a charging state). | Falls back to `state.S2open` where telemetry is unavailable. |
@@ -45,7 +53,13 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 > If you update your Wallbox beyond 6.7.x, simply redeploy using the installer command above to keep the telemetry fixes in place. The bridge auto-detects telemetry and switches to legacy data when telemetry is missing.
 
+## Release highlights (bridgechannels-2025.11.21)
+
+- Control-pilot driven entities strictly follow SAE J1772 state mapping so Home Assistant shows “cable disconnected” whenever the pilot remains at 12 V.
+- Telemetry debug sensors (`control_pilot_high_voltage`, duty cycle, etc.) no longer report zeroes on 6.7.x.
+- The installer can generate an EVCC-ready YAML snippet, so you can copy/paste the MQTT topics straight into EVCC without hand-editing.
+
 ## Acknowledgments
 
-The credits go out to jagheterfredrik (https://github.com/jagheterfredrik/wallbox-mqtt-bridge), who made the original MQTT Bridge for the Wallbox and [@jethrovo] for his updated version supporting version v6.6.x.
+The credits go out to jagheterfredrik (https://github.com/jagheterfredrik/wallbox-mqtt-bridge), who made the original MQTT Bridge for the Wallbox and jethrovo for his updated version supporting version v6.6.x.
 A big shoutout to [@tronikos](https://github.com/tronikos) for their valuable contributions. This project wouldn't be the same without the collaborative spirit of the open-source community.

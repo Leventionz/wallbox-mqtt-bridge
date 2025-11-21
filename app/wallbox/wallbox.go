@@ -368,7 +368,7 @@ func (w *Wallbox) SetHaloBrightness(brightness int) {
 func (w *Wallbox) CableConnected() int {
 	if w.HasTelemetry {
 		status := int(w.Data.RedisTelemetry.ControlPilotStatus)
-		if describeTelemetryStatus(status) != "Disconnected" {
+		if status != 0 && isTelemetryCableConnected(status) {
 			return 1
 		}
 		return 0

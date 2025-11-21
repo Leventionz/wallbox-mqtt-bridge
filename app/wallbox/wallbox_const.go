@@ -100,6 +100,16 @@ var telemetryControlPilotStates = map[int]string{
 	195: "Charging 2",
 }
 
+var telemetryControlPilotConnected = map[int]bool{
+	161: false,
+	162: false,
+	177: true,
+	178: true,
+	193: true,
+	194: true,
+	195: true,
+}
+
 var telemetryStatusDescriptions = map[int]string{
 	0:   "Disconnected",
 	14:  "Error",
@@ -141,4 +151,13 @@ func describeTelemetryStatus(code int) string {
 
 func isChargingTelemetryStatus(code int) bool {
 	return code == 193 || code == 194 || code == 195
+}
+
+func isTelemetryCableConnected(code int) bool {
+	if connected, ok := telemetryControlPilotConnected[code]; ok {
+		return connected
+	}
+
+	desc := describeTelemetryStatus(code)
+	return desc != "Disconnected" && desc != "Ready" && desc != "Unknown"
 }
