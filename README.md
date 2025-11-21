@@ -59,12 +59,12 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 - Control-pilot driven entities strictly follow SAE J1772 state mapping so Home Assistant shows “cable disconnected” whenever the pilot remains at 12 V.
 - Telemetry debug sensors (`control_pilot_high_voltage`, duty cycle, etc.) no longer report zeroes on 6.7.x.
 - The installer can generate an EVCC-ready YAML snippet, so you can copy/paste the MQTT topics straight into EVCC without hand-editing.
-
--Highly experimental !!!
-
-- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected. Config saved in bridge.ini
+- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected. Config saved in bridge.ini.
+- `sensor.wallbox_ocpp_status` now listens to `journalctl -u ocppwallbox.service` so it mirrors the live `StatusNotification` events rather than the occasionally-stale telemetry hash.
 
 ## OCPP self-healing & sensors
+
+The installer (or `./bridge --config`) can auto-populate these settings:
 
 ```ini
 [settings]

@@ -191,6 +191,27 @@ func describeOCPPStatus(code int) string {
 	return "Unknown"
 }
 
+var ocppStatusStringToCode = map[string]int{
+	"Available":     1,
+	"Preparing":     2,
+	"Charging":      3,
+	"SuspendedEVSE": 4,
+	"SuspendedEV":   5,
+	"Finishing":     6,
+	"Reserved":      7,
+	"Unavailable":   8,
+	"Faulted":       9,
+}
+
+func ocppStatusCodeFromString(status string) (int, bool) {
+	code, ok := ocppStatusStringToCode[status]
+	return code, ok
+}
+
+func LookupOCPPStatusCode(status string) (int, bool) {
+	return ocppStatusCodeFromString(status)
+}
+
 var ocppStatusUnplugged = map[int]bool{
 	1: true, // Available – backend thinks connector is free
 	4: true, // SuspendedEVSE – EVSE paused session

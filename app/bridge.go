@@ -1,12 +1,16 @@
 package bridge
 
 import (
+	"bufio"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -30,6 +34,8 @@ func RunBridge(configPath string) {
 
 	w := wallbox.New()
 	w.RefreshData()
+	stopJournal := startOCPPJournalWatcher(w)
+	defer stopJournal()
 
 	serialNumber := w.SerialNumber()
 	entityConfig := getEntities(w)
@@ -220,4 +226,75 @@ func restartCriticalServices() error {
 	}
 
 	return nil
+}
+
+func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		if err := watchOCPPJournal(ctx, w); err != nil && !errors.Is(err, context.Canceled) {
+			log.Printf("OCPP journal watcher exited: %v", err)
+		}
+	}()
+	return cancel
+}
+
+var statusRegex = regexp.MustCompile(`status"\s*:\s*"([^"]+)"`)
+
+func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
+	cmd := exec.CommandContext(ctx, "journalctl", "-u", "ocppwallbox.service", "-o", "json", "-f")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		select {
+		case <-ctx.Done():
+			cmd.Process.Kill()
+			return ctx.Err()
+		default:
+		}
+
+		line := scanner.Bytes()
+		status := extractStatusFromJournal(line)
+		if status == "" {
+			continue
+		}
+
+		if code, ok := wallbox.LookupOCPPStatusCode(status); ok {
+			w.SetOCPPStatusOverride(code)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	return cmd.Wait()
+}
+
+func extractStatusFromJournal(line []byte) string {
+	var entry struct {
+		Message string `json:"MESSAGE"`
+	}
+
+	if err := json.Unmarshal(line, &entry); err != nil {
+		return ""
+	}
+
+	if !strings.Contains(entry.Message, "StatusNotification") {
+		return ""
+	}
+
+	matches := statusRegex.FindStringSubmatch(entry.Message)
+	if len(matches) < 2 {
+		return ""
+	}
+
+	return matches[1]
 }

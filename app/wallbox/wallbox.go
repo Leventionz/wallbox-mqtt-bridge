@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -101,10 +102,13 @@ type DataCache struct {
 }
 
 type Wallbox struct {
-	redisClient *redis.Client
-	sqlClient   *sqlx.DB
-	Data        DataCache
-	ChargerType string `db:"charger_type"`
+	redisClient           *redis.Client
+	sqlClient             *sqlx.DB
+	Data                  DataCache
+	ChargerType           string `db:"charger_type"`
+	ocppStatusOverride    int
+	ocppStatusUpdated     time.Time
+	ocppStatusOverrideMux sync.RWMutex
 	// HasTelemetry becomes true once we have successfully processed at least
 	// one telemetry event and mapped it into RedisTelemetry. This lets higher
 	// layers prefer telemetry-based values on newer firmware while keeping a
@@ -132,6 +136,8 @@ func New() *Wallbox {
 		Password: "",
 		DB:       0,
 	})
+
+	w.ocppStatusOverride = -1
 
 	return &w
 }
@@ -427,6 +433,9 @@ func (w *Wallbox) IsChargingPilot() bool {
 }
 
 func (w *Wallbox) OCPPStatusCode() int {
+	if code, ok := w.getOCPPStatusOverride(); ok {
+		return code
+	}
 	return int(w.Data.RedisTelemetry.OCPPStatus)
 }
 
@@ -436,6 +445,25 @@ func (w *Wallbox) OCPPStatusDescription() string {
 
 func (w *Wallbox) OCPPIndicatesDisconnect() bool {
 	return ocppStatusIndicatesDisconnect(w.OCPPStatusCode())
+}
+
+func (w *Wallbox) SetOCPPStatusOverride(code int) {
+	w.ocppStatusOverrideMux.Lock()
+	w.ocppStatusOverride = code
+	w.ocppStatusUpdated = time.Now()
+	w.ocppStatusOverrideMux.Unlock()
+}
+
+func (w *Wallbox) getOCPPStatusOverride() (int, bool) {
+	w.ocppStatusOverrideMux.RLock()
+	code := w.ocppStatusOverride
+	ts := w.ocppStatusUpdated
+	w.ocppStatusOverrideMux.RUnlock()
+
+	if code >= 0 && time.Since(ts) < 10*time.Minute {
+		return code, true
+	}
+	return 0, false
 }
 
 func (w *Wallbox) StateMachineState() string {
