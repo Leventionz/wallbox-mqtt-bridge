@@ -162,6 +162,16 @@ func isTelemetryCableConnected(code int) bool {
 	return desc != "Disconnected" && desc != "Ready" && desc != "Unknown"
 }
 
+var telemetryChargingStates = map[int]bool{
+	193: true,
+	194: true,
+	195: true,
+}
+
+func isTelemetryCharging(code int) bool {
+	return telemetryChargingStates[code]
+}
+
 var ocppStatusDescriptions = map[int]string{
 	1: "Available",
 	2: "Preparing",

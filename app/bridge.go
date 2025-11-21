@@ -149,7 +149,9 @@ func RunBridge(configPath string) {
 			ocppCode := w.OCPPStatusCode()
 			ocppIndicatesDisconnect := w.OCPPIndicatesDisconnect()
 
-			if connected && ocppIndicatesDisconnect {
+			chargingPilot := w.IsChargingPilot()
+
+			if connected && ocppIndicatesDisconnect && !chargingPilot {
 				if mismatchStart.IsZero() {
 					mismatchStart = now
 					log.Printf("OCPP mismatch detected: pilot=%d (%s), OCPP=%d (%s)", w.ControlPilotCode(), w.ControlPilotStatus(), ocppCode, w.OCPPStatusDescription())

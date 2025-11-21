@@ -422,6 +422,10 @@ func (w *Wallbox) ControlPilotCode() int {
 	return w.Data.RedisState.ControlPilot
 }
 
+func (w *Wallbox) IsChargingPilot() bool {
+	return isTelemetryCharging(w.ControlPilotCode())
+}
+
 func (w *Wallbox) OCPPStatusCode() int {
 	return int(w.Data.RedisTelemetry.OCPPStatus)
 }
