@@ -66,8 +66,8 @@ fi
 
 read -r -p "Enable automatic OCPP self-heal on pilot/OCPP mismatch? [y/N]: " enable_self_heal
 if [[ "$enable_self_heal" =~ ^[Yy]$ ]]; then
-    read -r -p "Seconds mismatch must persist before restart [30]: " mismatch_seconds
-    mismatch_seconds=${mismatch_seconds:-30}
+    read -r -p "Seconds mismatch must persist before restart [60]: " mismatch_seconds
+    mismatch_seconds=${mismatch_seconds:-60}
     read -r -p "Cooldown between restarts in seconds [600]: " cooldown_seconds
     cooldown_seconds=${cooldown_seconds:-600}
     update_settings_ini auto_restart_ocpp true ocpp_mismatch_seconds "$mismatch_seconds" ocpp_restart_cooldown_seconds "$cooldown_seconds" || true
