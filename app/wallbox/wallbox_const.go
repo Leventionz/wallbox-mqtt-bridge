@@ -161,3 +161,34 @@ func isTelemetryCableConnected(code int) bool {
 	desc := describeTelemetryStatus(code)
 	return desc != "Disconnected" && desc != "Ready" && desc != "Unknown"
 }
+
+var ocppStatusDescriptions = map[int]string{
+	1: "Available",
+	2: "Preparing",
+	3: "Charging",
+	4: "SuspendedEVSE",
+	5: "SuspendedEV",
+	6: "Finishing",
+	7: "Reserved",
+	8: "Unavailable",
+	9: "Faulted",
+}
+
+func describeOCPPStatus(code int) string {
+	if desc, ok := ocppStatusDescriptions[code]; ok {
+		return desc
+	}
+	return "Unknown"
+}
+
+var ocppStatusUnplugged = map[int]bool{
+	1: true, // Available – backend thinks connector is free
+	4: true, // SuspendedEVSE – EVSE paused session
+	5: true, // SuspendedEV – vehicle paused session
+	8: true, // Unavailable
+	9: true, // Faulted
+}
+
+func ocppStatusIndicatesDisconnect(code int) bool {
+	return ocppStatusUnplugged[code]
+}

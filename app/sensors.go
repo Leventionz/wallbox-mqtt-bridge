@@ -623,6 +623,18 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 			},
 		},
 
+		"ocpp_status": {
+			Component: "sensor",
+			Getter: func() string {
+				code := w.OCPPStatusCode()
+				return fmt.Sprintf("%d: %s", code, w.OCPPStatusDescription())
+			},
+			Config: map[string]string{
+				"name":            "OCPP status",
+				"entity_category": "diagnostic",
+			},
+		},
+
 		// Schedule and PowerBoost
 		"schedule_status": {
 			Component: "sensor",

@@ -45,6 +45,7 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 | --- | --- | --- |
 | **Control pilot** | Telemetry control-pilot codes (161, 162, 177, 178, 193, 194, 195) drive `sensor.wallbox_control_pilot` **and** `binary_sensor.wallbox_cable_connected`. State A (≈ 12 V) now reports “disconnected”, while States B/C (≈ 9 V / 6 V) report “connected/charging”, matching SAE J1772 in Home Assistant. | Falls back to `state.ctrlPilot` on older firmware. |
 | **State machine / status** | Telemetry `SENSOR_STATE_MACHINE` feeds `sensor.wallbox_state_machine`, `sensor.wallbox_status`, and the debug `sensor.wallbox_m2w_status`. Every code in the official Wallbox enum (Waiting, Scheduled, Paused, Charging, Locked, Updating, etc.) is mapped to a friendly string. | Falls back to the legacy `m2w/state` hashes and existing override tables automatically. |
+| **OCPP visibility** | The bridge exposes `sensor.wallbox_ocpp_status` (codes 1–9 mapped to Available/Preparing/Charging/Suspended etc.), `binary_sensor.wallbox_ocpp_mismatch`, and `sensor.wallbox_ocpp_last_restart`. | `ocpp_status` lives with the other debug telemetry sensors (set `debug_sensors = true` to surface it). The mismatch + last restart sensors stay online even without the debug flag so you can monitor the self-heal. |
 | **Session energy** | `sensor.wallbox_added_energy` now tracks a telemetry baseline and reports **session** Wh (Internal Meter Energy – baseline) while `sensor.wallbox_cumulative_added_energy` remains the total. | Baseline resets whenever telemetry reports a non-charging state; older firmware continues to use `scheduleEnergy`. |
 | **S2 relay** | `sensor.wallbox_s2_open` is derived from control-pilot telemetry (S2 is “closed” only while telemetry reports a charging state). | Falls back to `state.S2open` where telemetry is unavailable. |
 | **Charging enable** | `sensor.wallbox_charging_enable` mirrors the telemetry `SENSOR_CHARGING_ENABLE` flag so toggles are instantaneous. | Falls back to `wallbox_config.charging_enable` on older firmware. |
@@ -53,11 +54,27 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 > If you update your Wallbox beyond 6.7.x, simply redeploy using the installer command above to keep the telemetry fixes in place. The bridge auto-detects telemetry and switches to legacy data when telemetry is missing.
 
+## OCPP self-healing & sensors
+
+- The bridge constantly compares the control pilot state (177/178/193/194/195 = cable connected) with the OCPP connector status. When the pilot says “connected” but OCPP says `Available`, `SuspendedEV`, `SuspendedEVSE`, `Unavailable`, or `Faulted`, the mismatch sensor turns on.
+- During installation `install.sh` now asks whether you want to enable the automatic OCPP self-heal and lets you set the mismatch / cooldown timers. You can also adjust them later in `bridge.ini` (or by rerunning `./bridge --config`).
+- Settings block:
+
+```ini
+[settings]
+auto_restart_ocpp = true
+ocpp_mismatch_seconds = 30            # how long the mismatch must persist
+ocpp_restart_cooldown_seconds = 600   # wait time between restarts
+```
+
+- Every restart is logged and published to Home Assistant via `sensor.wallbox_ocpp_last_restart`, so you have an audit trail even though the fix runs locally on the Wallbox.
+
 ## Release highlights (bridgechannels-2025.11.21)
 
 - Control-pilot driven entities strictly follow SAE J1772 state mapping so Home Assistant shows “cable disconnected” whenever the pilot remains at 12 V.
 - Telemetry debug sensors (`control_pilot_high_voltage`, duty cycle, etc.) no longer report zeroes on 6.7.x.
 - The installer can generate an EVCC-ready YAML snippet, so you can copy/paste the MQTT topics straight into EVCC without hand-editing.
+- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected.
 
 ## Acknowledgments
 

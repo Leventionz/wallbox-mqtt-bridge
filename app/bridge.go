@@ -3,7 +3,9 @@ package bridge
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -19,6 +21,13 @@ var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err
 
 func RunBridge(configPath string) {
 	c := LoadConfig(configPath)
+	if c.Settings.OCPPMismatchSeconds == 0 {
+		c.Settings.OCPPMismatchSeconds = 30
+	}
+	if c.Settings.OCPPRestartCooldown == 0 {
+		c.Settings.OCPPRestartCooldown = 600
+	}
+
 	w := wallbox.New()
 	w.RefreshData()
 
@@ -37,6 +46,32 @@ func RunBridge(configPath string) {
 		for k, v := range getPowerBoostEntities(w, c) {
 			entityConfig[k] = v
 		}
+	}
+
+	ocppMismatchState := "0"
+	ocppLastRestart := "never"
+	var mismatchStart time.Time
+	var lastRestart time.Time
+
+	entityConfig["ocpp_mismatch"] = Entity{
+		Component: "binary_sensor",
+		Getter:    func() string { return ocppMismatchState },
+		Config: map[string]string{
+			"name":            "OCPP mismatch",
+			"payload_on":      "1",
+			"payload_off":     "0",
+			"device_class":    "problem",
+			"entity_category": "diagnostic",
+		},
+	}
+
+	entityConfig["ocpp_last_restart"] = Entity{
+		Component: "sensor",
+		Getter:    func() string { return ocppLastRestart },
+		Config: map[string]string{
+			"name":            "OCPP last restart",
+			"entity_category": "diagnostic",
+		},
 	}
 
 	topicPrefix := "wallbox_" + serialNumber
@@ -108,6 +143,42 @@ func RunBridge(configPath string) {
 		select {
 		case <-ticker.C:
 			w.RefreshData()
+			now := time.Now()
+
+			connected := w.HasTelemetry && w.CableConnected() == 1
+			ocppCode := w.OCPPStatusCode()
+			ocppIndicatesDisconnect := w.OCPPIndicatesDisconnect()
+
+			if connected && ocppIndicatesDisconnect {
+				if mismatchStart.IsZero() {
+					mismatchStart = now
+					log.Printf("OCPP mismatch detected: pilot=%d (%s), OCPP=%d (%s)", w.ControlPilotCode(), w.ControlPilotStatus(), ocppCode, w.OCPPStatusDescription())
+				}
+				ocppMismatchState = "1"
+			} else {
+				if ocppMismatchState != "0" {
+					log.Println("OCPP mismatch cleared")
+				}
+				ocppMismatchState = "0"
+				mismatchStart = time.Time{}
+			}
+
+			if c.Settings.AutoRestartOCPP && ocppMismatchState == "1" && !mismatchStart.IsZero() {
+				threshold := time.Duration(c.Settings.OCPPMismatchSeconds) * time.Second
+				cooldown := time.Duration(c.Settings.OCPPRestartCooldown) * time.Second
+
+				if now.Sub(mismatchStart) >= threshold && (lastRestart.IsZero() || now.Sub(lastRestart) >= cooldown) {
+					log.Printf("Restarting wallboxsmachine + ocppwallbox after %s mismatch (OCPP %d: %s)", now.Sub(mismatchStart).Round(time.Second), ocppCode, w.OCPPStatusDescription())
+					if err := restartCriticalServices(); err != nil {
+						log.Printf("Failed to restart charging stack: %v", err)
+						continue
+					}
+					lastRestart = now
+					mismatchStart = now
+					ocppLastRestart = now.Format(time.RFC3339)
+				}
+			}
+
 			for key, val := range entityConfig {
 				payload := val.Getter()
 				bytePayload := []byte(fmt.Sprint(payload))
@@ -131,4 +202,20 @@ func RunBridge(configPath string) {
 	}
 
 	w.StopRedisSubscriptions()
+}
+
+func restartCriticalServices() error {
+	services := []string{
+		"wallboxsmachine.service",
+		"ocppwallbox.service",
+	}
+
+	for _, svc := range services {
+		cmd := exec.Command("systemctl", "restart", svc)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("restart %s: %w", svc, err)
+		}
+	}
+
+	return nil
 }

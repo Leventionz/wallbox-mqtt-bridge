@@ -96,6 +96,7 @@ type DataCache struct {
 		FirmwareError               float64 `redis:"telemetry.SENSOR_FIRMWARE_ERROR"`
 		PowerRelayManagementCommand float64 `redis:"telemetry.SENSOR_POWER_RELAY_MANAGEMENT_COMMAND"`
 		StateMachine                float64 `redis:"telemetry.SENSOR_STATE_MACHINE"`
+		OCPPStatus                  float64 `redis:"telemetry.SENSOR_OCPP_STATUS"`
 	}
 }
 
@@ -412,6 +413,25 @@ func (w *Wallbox) ControlPilotStatus() string {
 		return fmt.Sprintf("%d: %s", w.Data.RedisState.ControlPilot, desc)
 	}
 	return fmt.Sprintf("%d: Unknown", w.Data.RedisState.ControlPilot)
+}
+
+func (w *Wallbox) ControlPilotCode() int {
+	if w.HasTelemetry && w.Data.RedisTelemetry.ControlPilotStatus != 0 {
+		return int(w.Data.RedisTelemetry.ControlPilotStatus)
+	}
+	return w.Data.RedisState.ControlPilot
+}
+
+func (w *Wallbox) OCPPStatusCode() int {
+	return int(w.Data.RedisTelemetry.OCPPStatus)
+}
+
+func (w *Wallbox) OCPPStatusDescription() string {
+	return describeOCPPStatus(w.OCPPStatusCode())
+}
+
+func (w *Wallbox) OCPPIndicatesDisconnect() bool {
+	return ocppStatusIndicatesDisconnect(w.OCPPStatusCode())
 }
 
 func (w *Wallbox) StateMachineState() string {

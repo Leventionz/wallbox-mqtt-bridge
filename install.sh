@@ -4,6 +4,38 @@ set -euo pipefail
 
 RELEASE_TAG="${BRIDGE_VERSION:-bridgechannels-2025.11.21}"
 BASE_URL="${BRIDGE_BASE_URL:-https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/${RELEASE_TAG}}"
+INI_FILE=~/mqtt-bridge/bridge.ini
+
+update_settings_ini() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "python3 not found; please edit ${INI_FILE} manually to set $*"
+        return 1
+    fi
+
+    python3 - "${INI_FILE}" "$@" <<'PY'
+import configparser
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+args = sys.argv[2:]
+if len(args) % 2 != 0:
+    raise SystemExit("update_settings_ini requires key/value pairs")
+
+cfg = configparser.ConfigParser()
+cfg.optionxform = str
+cfg.read(path)
+
+if 'settings' not in cfg:
+    cfg['settings'] = {}
+
+for i in range(0, len(args), 2):
+    cfg['settings'][args[i]] = args[i + 1]
+
+with open(path, 'w') as fh:
+    cfg.write(fh)
+PY
+}
 
 # Remove any previous installation, except any configuration
 systemctl stop mqtt-bridge 2> /dev/null
@@ -26,10 +58,21 @@ fi
 chmod +x ~/mqtt-bridge/bridge
 
 # Create config if it doesn't exist
-if [ ! -e ~/mqtt-bridge/bridge.ini ]; then
+if [ ! -e "$INI_FILE" ]; then
     echo "No configuration found, please provide it now"
     cd ~/mqtt-bridge/
     ./bridge --config
+fi
+
+read -r -p "Enable automatic OCPP self-heal on pilot/OCPP mismatch? [y/N]: " enable_self_heal
+if [[ "$enable_self_heal" =~ ^[Yy]$ ]]; then
+    read -r -p "Seconds mismatch must persist before restart [30]: " mismatch_seconds
+    mismatch_seconds=${mismatch_seconds:-30}
+    read -r -p "Cooldown between restarts in seconds [600]: " cooldown_seconds
+    cooldown_seconds=${cooldown_seconds:-600}
+    update_settings_ini auto_restart_ocpp true ocpp_mismatch_seconds "$mismatch_seconds" ocpp_restart_cooldown_seconds "$cooldown_seconds" || true
+else
+    update_settings_ini auto_restart_ocpp false || true
 fi
 
 # Optional EVCC helper
