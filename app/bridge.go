@@ -231,8 +231,11 @@ func restartCriticalServices() error {
 func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
+		log.Println("Starting OCPP journal watcher...")
 		if err := watchOCPPJournal(ctx, w); err != nil && !errors.Is(err, context.Canceled) {
 			log.Printf("OCPP journal watcher exited: %v", err)
+		} else {
+			log.Println("OCPP journal watcher stopped")
 		}
 	}()
 	return cancel
@@ -241,17 +244,18 @@ func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
 var statusRegex = regexp.MustCompile(`status"\s*:\s*"([^"]+)"`)
 
 func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
-	cmd := exec.CommandContext(ctx, "journalctl", "-u", "ocppwallbox.service", "-o", "json", "-f")
-	stdout, err := cmd.StdoutPipe()
+	cmd, scanner, err := startJournalCommand(ctx, "json")
 	if err != nil {
-		return err
+		log.Printf("Falling back to journalctl cat mode: %v", err)
+		cmd, scanner, err = startJournalCommand(ctx, "cat")
+		if err != nil {
+			return err
+		}
+		log.Println("OCPP journal watcher running in cat mode (regex parser)")
+	} else {
+		log.Println("OCPP journal watcher running in json mode")
 	}
 
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
@@ -267,6 +271,7 @@ func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
 		}
 
 		if code, ok := wallbox.LookupOCPPStatusCode(status); ok {
+			log.Printf("OCPP journal: status=%s code=%d", status, code)
 			w.SetOCPPStatusOverride(code)
 		}
 	}
@@ -279,22 +284,53 @@ func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
 }
 
 func extractStatusFromJournal(line []byte) string {
-	var entry struct {
-		Message string `json:"MESSAGE"`
-	}
-
-	if err := json.Unmarshal(line, &entry); err != nil {
+	message := parseJournalMessage(line)
+	if message == "" {
 		return ""
 	}
 
-	if !strings.Contains(entry.Message, "StatusNotification") {
+	if !strings.Contains(message, "StatusNotification") {
 		return ""
 	}
 
-	matches := statusRegex.FindStringSubmatch(entry.Message)
+	matches := statusRegex.FindStringSubmatch(message)
 	if len(matches) < 2 {
 		return ""
 	}
 
 	return matches[1]
+}
+
+func parseJournalMessage(line []byte) string {
+	var entry struct {
+		Message string `json:"MESSAGE"`
+	}
+
+	if err := json.Unmarshal(line, &entry); err == nil && entry.Message != "" {
+		return entry.Message
+	}
+
+	// fallback to cat mode line
+	return string(line)
+}
+
+func startJournalCommand(ctx context.Context, mode string) (*exec.Cmd, *bufio.Scanner, error) {
+	args := []string{"-u", "ocppwallbox.service", "-f"}
+	if mode == "json" {
+		args = append(args, "-o", "json")
+	} else {
+		args = append(args, "-o", "cat")
+	}
+
+	cmd := exec.CommandContext(ctx, "journalctl", args...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, nil, err
+	}
+
+	return cmd, bufio.NewScanner(stdout), nil
 }
