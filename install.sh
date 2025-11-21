@@ -24,7 +24,7 @@ if len(args) % 2 != 0:
 
 cfg = configparser.ConfigParser()
 cfg.optionxform = str
-cfg.read(path)
+cfg.read(str(path))
 
 if 'settings' not in cfg:
     cfg['settings'] = {}
