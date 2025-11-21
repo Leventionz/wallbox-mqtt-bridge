@@ -38,8 +38,8 @@ PY
 }
 
 # Remove any previous installation, except any configuration
-systemctl stop mqtt-bridge 2> /dev/null
-systemctl disable mqtt-bridge 2> /dev/null
+systemctl stop mqtt-bridge 2> /dev/null || true
+systemctl disable mqtt-bridge 2> /dev/null || true
 rm -f /lib/systemd/system/mqtt-bridge.service
 find ~/mqtt-bridge/ -type f ! -name bridge.ini -delete
 
