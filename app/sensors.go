@@ -648,6 +648,98 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
+		"dca_voltage_l1": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_VoltageL1) },
+			Config: map[string]string{
+				"name":                        "DCA Voltage L1",
+				"device_class":                "voltage",
+				"unit_of_measurement":         "V",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_voltage_l2": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_VoltageL2) },
+			Config: map[string]string{
+				"name":                        "DCA Voltage L2",
+				"device_class":                "voltage",
+				"unit_of_measurement":         "V",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_voltage_l3": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_VoltageL3) },
+			Config: map[string]string{
+				"name":                        "DCA Voltage L3",
+				"device_class":                "voltage",
+				"unit_of_measurement":         "V",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_current_l1": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_CurrentL1) },
+			Config: map[string]string{
+				"name":                        "DCA Current L1",
+				"device_class":                "current",
+				"unit_of_measurement":         "A",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_current_l2": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_CurrentL2) },
+			Config: map[string]string{
+				"name":                        "DCA Current L2",
+				"device_class":                "current",
+				"unit_of_measurement":         "A",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_current_l3": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCA_CurrentL3) },
+			Config: map[string]string{
+				"name":                        "DCA Current L3",
+				"device_class":                "current",
+				"unit_of_measurement":         "A",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"dca_meter_frequency": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.DCAMeterFrequency) },
+			Config: map[string]string{
+				"name":                        "DCA Meter Frequency",
+				"device_class":                "frequency",
+				"unit_of_measurement":         "Hz",
+				"state_class":                 "measurement",
+				"suggested_display_precision": "1",
+				"entity_category":             "diagnostic",
+			},
+		},
+		"external_meter_status": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ExternalMeterStatus) },
+			Config: map[string]string{
+				"name":            "External Meter Status",
+				"entity_category": "diagnostic",
+			},
+		},
 
 		"ocpp_status": {
 			Component: "sensor",
@@ -868,6 +960,62 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PowerRelayManagementCommand) },
 			Config: map[string]string{
 				"name":            "Power Relay Management Command",
+				"entity_category": "diagnostic",
+			},
+		},
+		"control_mode": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ControlMode) },
+			Config: map[string]string{
+				"name":            "Control Mode",
+				"entity_category": "diagnostic",
+			},
+		},
+		"pms_dominant_feature": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSDominantFeature) },
+			Config: map[string]string{
+				"name":            "PMS Dominant Feature",
+				"entity_category": "diagnostic",
+			},
+		},
+		"pms_metadata": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSMetadata) },
+			Config: map[string]string{
+				"name":            "PMS Metadata",
+				"entity_category": "diagnostic",
+			},
+		},
+		"pms_phase_switch": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSPhaseSwitch) },
+			Config: map[string]string{
+				"name":            "PMS Phase Switch",
+				"entity_category": "diagnostic",
+			},
+		},
+		"gsm_reco_trigger": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GSMRecoTrigger) },
+			Config: map[string]string{
+				"name":            "GSM Reconnect Trigger",
+				"entity_category": "diagnostic",
+			},
+		},
+		"connectivity_status": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ConnectivityStatus) },
+			Config: map[string]string{
+				"name":            "Connectivity Status",
+				"entity_category": "diagnostic",
+			},
+		},
+		"on_time": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.OnTime) },
+			Config: map[string]string{
+				"name":            "System On Time",
 				"entity_category": "diagnostic",
 			},
 		},
