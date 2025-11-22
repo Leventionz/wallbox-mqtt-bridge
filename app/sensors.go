@@ -1019,6 +1019,49 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category": "diagnostic",
 			},
 		},
+		"wifi_signal_strength": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.WifiSignalStrength) },
+			Config: map[string]string{
+				"name":                        "Wi-Fi Signal Strength",
+				"icon":                        "mdi:wifi",
+				"unit_of_measurement":         "dBm",
+				"entity_category":             "diagnostic",
+				"suggested_display_precision": "0",
+			},
+		},
+		"connection_type": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ConnectionType) },
+			Config: map[string]string{
+				"name":            "Connection Type",
+				"entity_category": "diagnostic",
+			},
+		},
+		"get_charger_config_send": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigSend) },
+			Config: map[string]string{
+				"name":            "Get Charger Config Send Count",
+				"entity_category": "diagnostic",
+			},
+		},
+		"get_charger_config_receive": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigReceive) },
+			Config: map[string]string{
+				"name":            "Get Charger Config Receive Count",
+				"entity_category": "diagnostic",
+			},
+		},
+		"get_charger_config_calls": {
+			Component: "sensor",
+			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigCalls) },
+			Config: map[string]string{
+				"name":            "Get Charger Config Calls",
+				"entity_category": "diagnostic",
+			},
+		},
 	}
 
 	return entities

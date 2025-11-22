@@ -100,21 +100,26 @@ type DataCache struct {
 		OCPPStatus                  float64 `redis:"telemetry.SENSOR_OCPP_STATUS"`
 
 		// Quiet unmapped telemetry to avoid log spam
-		ControlMode         float64 `redis:"telemetry.SENSOR_CONTROL_MODE"`
-		DCA_VoltageL1       float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L1"`
-		DCA_VoltageL2       float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L2"`
-		DCA_VoltageL3       float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L3"`
-		DCA_CurrentL1       float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L1"`
-		DCA_CurrentL2       float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L2"`
-		DCA_CurrentL3       float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L3"`
-		DCAMeterFrequency   float64 `redis:"telemetry.SENSOR_DCA_METER_FREQUENCY"`
-		ExternalMeterStatus float64 `redis:"telemetry.SENSOR_EXTERNAL_METER_STATUS"`
-		PMSDominantFeature  float64 `redis:"telemetry.SENSOR_PMS_DOMINANT_FEATURE"`
-		PMSMetadata         float64 `redis:"telemetry.SENSOR_PMS_METADATA"`
-		PMSPhaseSwitch      float64 `redis:"telemetry.SENSOR_PMS_PHASE_SWITCH"`
-		GSMRecoTrigger      float64 `redis:"telemetry.SENSOR_GSM_RECO_TRIGGER"`
-		ConnectivityStatus  float64 `redis:"telemetry.SENSOR_CONNECTIVITY_STATUS"`
-		OnTime              float64 `redis:"telemetry.SENSOR_ON_TIME"`
+		ControlMode             float64 `redis:"telemetry.SENSOR_CONTROL_MODE"`
+		DCA_VoltageL1           float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L1"`
+		DCA_VoltageL2           float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L2"`
+		DCA_VoltageL3           float64 `redis:"telemetry.SENSOR_DCA_VOLTAGE_L3"`
+		DCA_CurrentL1           float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L1"`
+		DCA_CurrentL2           float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L2"`
+		DCA_CurrentL3           float64 `redis:"telemetry.SENSOR_DCA_CURRENT_L3"`
+		DCAMeterFrequency       float64 `redis:"telemetry.SENSOR_DCA_METER_FREQUENCY"`
+		ExternalMeterStatus     float64 `redis:"telemetry.SENSOR_EXTERNAL_METER_STATUS"`
+		PMSDominantFeature      float64 `redis:"telemetry.SENSOR_PMS_DOMINANT_FEATURE"`
+		PMSMetadata             float64 `redis:"telemetry.SENSOR_PMS_METADATA"`
+		PMSPhaseSwitch          float64 `redis:"telemetry.SENSOR_PMS_PHASE_SWITCH"`
+		GSMRecoTrigger          float64 `redis:"telemetry.SENSOR_GSM_RECO_TRIGGER"`
+		ConnectivityStatus      float64 `redis:"telemetry.SENSOR_CONNECTIVITY_STATUS"`
+		OnTime                  float64 `redis:"telemetry.SENSOR_ON_TIME"`
+		WifiSignalStrength      float64 `redis:"telemetry.SENSOR_WIFI_SIGNAL_STRENGTH"`
+		ConnectionType          float64 `redis:"telemetry.SENSOR_CONNECTION_TYPE"`
+		GetChargerConfigSend    float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_SEND"`
+		GetChargerConfigReceive float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_RECEIVE"`
+		GetChargerConfigCalls   float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_CALLS"`
 	}
 }
 
