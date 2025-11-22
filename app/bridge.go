@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -262,22 +264,85 @@ func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
 var statusRegex = regexp.MustCompile(`status"\s*:\s*"([^"]+)"`)
 
 func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
-	cmd, scanner, err := startJournalCommand(ctx, "json")
-	if err != nil {
-		log.Printf("Falling back to journalctl cat mode: %v", err)
-		cmd, scanner, err = startJournalCommand(ctx, "cat")
+	backoff := time.Second
+	const maxBackoff = 30 * time.Second
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		cmd, scanner, err := startJournalCommand(ctx, "json")
+		mode := "json"
 		if err != nil {
+			log.Printf("Falling back to journalctl cat mode: %v", err)
+			cmd, scanner, err = startJournalCommand(ctx, "cat")
+			mode = "cat"
+		}
+		if err != nil {
+			log.Printf("OCPP journal watcher failed to start: %v (retrying in %s)", err, backoff)
+			time.Sleep(backoff)
+			if backoff < maxBackoff {
+				backoff *= 2
+			}
+			continue
+		}
+
+		if mode == "json" {
+			log.Println("OCPP journal watcher running in json mode")
+		} else {
+			log.Println("OCPP journal watcher running in cat mode (regex parser)")
+		}
+
+		err = streamOCPPJournal(ctx, w, cmd, scanner)
+		if err == nil || errors.Is(err, context.Canceled) {
 			return err
 		}
-		log.Println("OCPP journal watcher running in cat mode (regex parser)")
-	} else {
-		log.Println("OCPP journal watcher running in json mode")
+
+		log.Printf("OCPP journal watcher exited: %v (retrying in %s)", err, backoff)
+		time.Sleep(backoff)
+		if backoff < maxBackoff {
+			backoff *= 2
+		}
 	}
+}
+
+func streamOCPPJournal(ctx context.Context, w *wallbox.Wallbox, cmd *exec.Cmd, scanner *bufio.Scanner) error {
+	defer func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	}()
+
+	var lastStatus atomic.Int64
+	lastStatus.Store(time.Now().UnixNano())
+	var warned atomic.Bool
+
+	warnTicker := time.NewTicker(30 * time.Second)
+	defer warnTicker.Stop()
+
+	stopWarn := make(chan struct{})
+	defer close(stopWarn)
+
+	go func() {
+		for {
+			select {
+			case <-warnTicker.C:
+				if time.Since(time.Unix(0, lastStatus.Load())) > 30*time.Second {
+					if warned.CompareAndSwap(false, true) {
+						log.Println("OCPP journal watcher has not seen a StatusNotification for 30s; telemetry values will be used until new log entries arrive")
+					}
+				}
+			case <-stopWarn:
+				return
+			}
+		}
+	}()
 
 	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
-			cmd.Process.Kill()
 			return ctx.Err()
 		default:
 		}
@@ -287,6 +352,9 @@ func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
 		if status == "" {
 			continue
 		}
+
+		lastStatus.Store(time.Now().UnixNano())
+		warned.Store(false)
 
 		if code, ok := wallbox.LookupOCPPStatusCode(status); ok {
 			log.Printf("OCPP journal: status=%s code=%d", status, code)
@@ -298,7 +366,7 @@ func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
 		return err
 	}
 
-	return cmd.Wait()
+	return io.EOF
 }
 
 func extractStatusFromJournal(line []byte) string {
