@@ -220,9 +220,8 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 			Component: "sensor",
 			Getter:    w.ControlPilotLetter,
 			Config: map[string]string{
-				"name":            "Control pilot state",
-				"icon":            "mdi:alpha-a-box-outline",
-				"entity_category": "diagnostic",
+				"name": "Control pilot state",
+				"icon": "mdi:alpha-a-box-outline",
 			},
 		},
 		"temp_l1": {

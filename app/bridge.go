@@ -20,6 +20,10 @@ import (
 	"wallbox-mqtt-bridge/app/wallbox"
 )
 
+var (
+	buildVersion = "dev"
+)
+
 var connectLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
 	panic("Connection to MQTT lost")
 }
@@ -232,8 +236,12 @@ func restartCriticalServices() error {
 }
 
 func bridgeVersion() string {
+	if buildVersion != "" && buildVersion != "dev" {
+		return buildVersion
+	}
+
 	buildInfo, ok := debug.ReadBuildInfo()
-	if ok {
+	if ok && buildInfo.Main.Version != "" && buildInfo.Main.Version != "(devel)" {
 		return buildInfo.Main.Version
 	}
 	return "dev"

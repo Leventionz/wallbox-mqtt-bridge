@@ -203,8 +203,18 @@ func (w *Wallbox) SerialNumber() string {
 
 func (w *Wallbox) FirmwareVersion() string {
 	var firmware string
-	w.sqlClient.Get(&firmware, "SELECT `version` FROM `wallbox_version` ORDER BY `id` DESC LIMIT 1")
-	return firmware
+	err := w.sqlClient.Get(&firmware, "SELECT `version` FROM `wallbox_version` ORDER BY `id` DESC LIMIT 1")
+	if err == nil && firmware != "" {
+		return firmware
+	}
+
+	var fallback string
+	err = w.sqlClient.Get(&fallback, "SELECT `firmware_version` FROM `charger_info` LIMIT 1")
+	if err == nil && fallback != "" {
+		return fallback
+	}
+
+	return "unknown"
 }
 
 func (w *Wallbox) UserId() string {
