@@ -303,20 +303,15 @@ func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
 
 func extractStatusFromJournal(line []byte) string {
 	message := parseJournalMessage(line)
-	if message == "" {
-		return ""
+	if status := extractStatusFromString(message); status != "" {
+		return status
 	}
 
-	if !strings.Contains(message, "StatusNotification") {
-		return ""
+	if status := extractStatusFromString(string(line)); status != "" {
+		return status
 	}
 
-	matches := statusRegex.FindStringSubmatch(message)
-	if len(matches) < 2 {
-		return ""
-	}
-
-	return matches[1]
+	return ""
 }
 
 func parseJournalMessage(line []byte) string {
@@ -330,6 +325,17 @@ func parseJournalMessage(line []byte) string {
 
 	// fallback to cat mode line
 	return string(line)
+}
+
+func extractStatusFromString(s string) string {
+	if s == "" || !strings.Contains(s, "StatusNotification") {
+		return ""
+	}
+	matches := statusRegex.FindStringSubmatch(s)
+	if len(matches) >= 2 {
+		return matches[1]
+	}
+	return ""
 }
 
 func startJournalCommand(ctx context.Context, mode string) (*exec.Cmd, *bufio.Scanner, error) {

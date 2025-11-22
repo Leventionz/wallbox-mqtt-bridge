@@ -209,7 +209,7 @@ func (w *Wallbox) FirmwareVersion() string {
 	}
 
 	var fallback string
-	err = w.sqlClient.Get(&fallback, "SELECT `firmware_version` FROM `charger_info` LIMIT 1")
+	err = w.sqlClient.Get(&fallback, "SELECT `software_version` FROM `charger_info` LIMIT 1")
 	if err == nil && fallback != "" {
 		return fallback
 	}
