@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -38,6 +39,7 @@ func RunBridge(configPath string) {
 	defer stopJournal()
 
 	serialNumber := w.SerialNumber()
+	firmwareVersion := w.FirmwareVersion()
 	entityConfig := getEntities(w)
 	if c.Settings.DebugSensors {
 		for k, v := range getDebugEntities(w) {
@@ -106,6 +108,7 @@ func RunBridge(configPath string) {
 			"device": map[string]string{
 				"identifiers": serialNumber,
 				"name":        c.Settings.DeviceName,
+				"sw_version":  fmt.Sprintf("%s (FW %s)", bridgeVersion(), firmwareVersion),
 			},
 		}
 		if val.Setter != nil {
@@ -228,6 +231,13 @@ func restartCriticalServices() error {
 	return nil
 }
 
+func bridgeVersion() string {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if ok {
+		return buildInfo.Main.Version
+	}
+	return "dev"
+}
 func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

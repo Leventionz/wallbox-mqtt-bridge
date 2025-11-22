@@ -201,6 +201,12 @@ func (w *Wallbox) SerialNumber() string {
 	return serialNumber
 }
 
+func (w *Wallbox) FirmwareVersion() string {
+	var firmware string
+	w.sqlClient.Get(&firmware, "SELECT `version` FROM `wallbox_version` ORDER BY `id` DESC LIMIT 1")
+	return firmware
+}
+
 func (w *Wallbox) UserId() string {
 	var userId string
 	w.sqlClient.QueryRow("SELECT `user_id` FROM `users` WHERE `user_id` != 1 ORDER BY `user_id` DESC LIMIT 1").Scan(&userId)
@@ -426,6 +432,14 @@ func (w *Wallbox) ControlPilotCode() int {
 		return int(w.Data.RedisTelemetry.ControlPilotStatus)
 	}
 	return w.Data.RedisState.ControlPilot
+}
+
+func (w *Wallbox) ControlPilotLetter() string {
+	code := w.ControlPilotCode()
+	if letter, ok := telemetryControlPilotLetters[code]; ok {
+		return letter
+	}
+	return "Unknown"
 }
 
 func (w *Wallbox) IsChargingPilot() bool {

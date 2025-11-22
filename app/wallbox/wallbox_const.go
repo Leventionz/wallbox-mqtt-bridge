@@ -100,6 +100,16 @@ var telemetryControlPilotStates = map[int]string{
 	195: "Charging 2",
 }
 
+var telemetryControlPilotLetters = map[int]string{
+	161: "A",
+	162: "A",
+	177: "B",
+	178: "B",
+	193: "C",
+	194: "C",
+	195: "C",
+}
+
 var telemetryControlPilotConnected = map[int]bool{
 	161: false,
 	162: false,

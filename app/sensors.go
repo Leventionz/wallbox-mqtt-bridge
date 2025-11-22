@@ -216,6 +216,15 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 				"name": "Status",
 			},
 		},
+		"control_pilot_state": {
+			Component: "sensor",
+			Getter:    w.ControlPilotLetter,
+			Config: map[string]string{
+				"name":            "Control pilot state",
+				"icon":            "mdi:alpha-a-box-outline",
+				"entity_category": "diagnostic",
+			},
+		},
 		"temp_l1": {
 			Component: "sensor",
 			Getter:    func() string { return fmt.Sprint(w.TemperatureL1()) },
@@ -377,6 +386,24 @@ func getDebugEntities(w *wallbox.Wallbox) map[string]Entity {
 			Getter:    w.ControlPilotStatus,
 			Config: map[string]string{
 				"name": "Control pilot",
+			},
+		},
+		"firmware_version": {
+			Component: "sensor",
+			Getter:    w.FirmwareVersion,
+			Config: map[string]string{
+				"name":            "Wallbox firmware version",
+				"icon":            "mdi:chip",
+				"entity_category": "diagnostic",
+			},
+		},
+		"bridge_version": {
+			Component: "sensor",
+			Getter:    bridgeVersion,
+			Config: map[string]string{
+				"name":            "MQTT bridge version",
+				"icon":            "mdi:alpha-b-box-outline",
+				"entity_category": "diagnostic",
 			},
 		},
 		"m2w_status": {
