@@ -54,14 +54,26 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 > If you update your Wallbox beyond 6.7.x, simply redeploy using the installer command above to keep the telemetry fixes in place. The bridge auto-detects telemetry and switches to legacy data when telemetry is missing.
 
+## 6.7.33 bridge overview
+
+- **True cable detection** – `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes (177/178/193/194/195) so SAE J1772 State A now reports “off” and you no longer get false positives after unplugging.
+- **Live OCPP status** – `sensor.wallbox_ocpp_status` is now driven by the `StatusNotification` feed from `journalctl -u ocppwallbox.service`. The bridge watches the journald stream (JSON with automatic fallback to `-o cat`) and overrides the telemetry hash for 10 minutes after every parsed update.
+- **Mismatch awareness + heal** – `binary_sensor.wallbox_ocpp_mismatch` flips on whenever the control pilot is in B/C but OCPP reports Available/SuspendedEVSE/Unavailable/Faulted. If auto-heal is enabled the bridge restarts both `wallboxsmachine.service` **and** `ocppwallbox.service` after `ocpp_mismatch_seconds` (default 60 s) and enforces a restart cooldown. All three sensors (`ocpp_status`, `ocpp_mismatch`, `ocpp_last_restart`) publish even when auto-heal is disabled.
+- **Charger firmware insight** – `sensor.wallbox_firmware_version` pulls from `wallbox_version.version` and falls back to `charger_info.software_version`, so firmware 6.7.33 always shows up in MQTT/Home Assistant.
+- **Bridge version traceability** – `sensor.wallbox_bridge_version` mirrors the build string (`bridgechannels-YYYY.MM.DD+<commit>`) embedded via `ldflags`, helping you confirm which exact binary is running.
+- **Installer polish** – the refreshed `install.sh` tolerates missing services, fixes Python 3.5 `configparser` / `pathlib` issues, prompts for the auto-heal timers with the new defaults, and can optionally emit an EVCC-ready YAML snippet.
+- **Debug telemetry parity** – control-pilot voltages, duty cycle, and other `/wbx/telemetry/events` fields now populate on 6.7.33 just like 6.5/6.6, so your historical dashboards survive the firmware jump.
+
 ## Release highlights (bridgechannels-2025.11.21)
 
 - Control-pilot driven entities strictly follow SAE J1772 state mapping so Home Assistant shows “cable disconnected” whenever the pilot remains at 12 V.
 - Telemetry debug sensors (`control_pilot_high_voltage`, duty cycle, etc.) no longer report zeroes on 6.7.x.
 - The installer can generate an EVCC-ready YAML snippet, so you can copy/paste the MQTT topics straight into EVCC without hand-editing.
-- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected. Config saved in bridge.ini.
-- `sensor.wallbox_ocpp_status` now listens to `journalctl -u ocppwallbox.service` so it mirrors the live `StatusNotification` events rather than the occasionally-stale telemetry hash.
-- Added `sensor.wallbox_control_pilot_state` (letter notation) and new debug sensors for bridge firmware (`sensor.wallbox_bridge_version`) and charger firmware (`sensor.wallbox_firmware_version`) to simplify support reports.
+- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts **both** `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected. Config saved in `bridge.ini` and injected by `install.sh`.
+- `sensor.wallbox_ocpp_status` listens to `journalctl -u ocppwallbox.service` (JSON/cat fallback) so it mirrors live `StatusNotification` events instead of stale Redis telemetry.
+- Added `sensor.wallbox_control_pilot_state` (letter notation) and new debug sensors for bridge firmware (`sensor.wallbox_bridge_version`) plus charger firmware (`sensor.wallbox_firmware_version`) to simplify support reports.
+- Default `ocpp_mismatch_seconds` is now 60 s, restart cooldown 600 s, and the installer prompts with those values.
+- `install.sh` is safe to re-run on partially installed systems (missing services no longer abort the script) and is compatible with the Python 3.5 stack on the Wallbox.
 
 ## OCPP self-healing & sensors
 
