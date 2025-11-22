@@ -58,7 +58,7 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 - **True cable detection** – `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes (177/178/193/194/195).
 - **Live OCPP status** – `sensor.wallbox_ocpp_status` is now driven by the `StatusNotification` feed from `journalctl -u ocppwallbox.service`. The bridge watches the journald stream (JSON with automatic fallback to `-o cat`) and overrides the telemetry hash for 10 minutes after every parsed update.
-- **Mismatch awareness + heal** – `binary_sensor.wallbox_ocpp_mismatch` flips on whenever the control pilot is in B/C but OCPP reports Available/SuspendedEVSE/Unavailable/Faulted. If auto-heal is enabled the bridge restarts both `wallboxsmachine.service` **and** `ocppwallbox.service` after `ocpp_mismatch_seconds` (default 60 s) and enforces a restart cooldown. All three sensors (`ocpp_status`, `ocpp_mismatch`, `ocpp_last_restart`) publish even when auto-heal is disabled.
+- **Mismatch awareness + heal** – `binary_sensor.wallbox_ocpp_mismatch` flips on whenever the control pilot is in B/C but OCPP reports Available/SuspendedEVSE/Unavailable/Faulted. If auto-heal is enabled the bridge restarts both `wallboxsmachine.service` **and** `ocppwallbox.service` after `ocpp_mismatch_seconds` (default 60 s) and enforces a restart cooldown. All three sensors (`ocpp_status`, `ocpp_mismatch`, `ocpp_last_restart`) publish even when auto-heal is disabled. **DO NOT EANABLE THE AUTO-HEAL IF YOU DO NOT USE OCPP**
 - **Installer polish** – the refreshed `install.sh` tolerates missing services, fixes Python 3.5 `configparser` / `pathlib` issues, prompts for the auto-heal timers with defaults, and can optionally emit an EVCC-ready YAML snippet.
 - **Debug telemetry parity** – control-pilot voltages, duty cycle, and other `/wbx/telemetry/events` fields now populate on 6.7.33 just like 6.5/6.6, so historical dashboards survive the firmware jump.
 
@@ -70,7 +70,7 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 - `sensor.wallbox_ocpp_status` listens to `journalctl -u ocppwallbox.service` (JSON/cat fallback) so it mirrors live `StatusNotification` events instead of stale Redis telemetry.
 - Added `sensor.wallbox_control_pilot_state` (letter notation) and new debug sensors for bridge firmware (`sensor.wallbox_bridge_version`) plus charger firmware (`sensor.wallbox_firmware_version`).
 - `install.sh` is safe to re-run on partially installed systems (missing services no longer abort the script) and is compatible with the Python 3.5 stack on the Wallbox.
-- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts **both** `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected. Config saved in `bridge.ini` and injected by `install.sh` (EXPERIMENTAL - DO NOT ENABLE UNLESS YOU HAVE THIS PROBLEM!)
+- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts **both** `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected (this is experimental - please be careful with enabling this if you do not have this problem and definately do not enable if you do not use OCPP).
 
 ## OCPP self-healing & sensors
 
