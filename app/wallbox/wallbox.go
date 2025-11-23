@@ -887,22 +887,9 @@ func (w *Wallbox) ProcessChargerStatusEvent(payload string) {
 		log.Printf("Failed to cache last OCPP status event: %v", err)
 	}
 
-	if event.Header.MessageID != "CHARGER_STATUS_CHANGED" {
-		return
-	}
-
-	if event.Body.OCPPStatusNumeric != 0 {
-		w.SetTelemetryOCPPStatus(int(event.Body.OCPPStatusNumeric))
-		return
-	}
-
-	if event.Body.OCPPStatusString != "" {
-		if code, ok := ocppStatusCodeFromString(event.Body.OCPPStatusString); ok {
-			w.SetTelemetryOCPPStatus(code)
-		} else {
-			log.Printf("Unmapped OCPP status string from charger status event: %s", event.Body.OCPPStatusString)
-		}
-	}
+	// We still consume the event for other telemetry fields and to cache the payload,
+	// but we no longer override the OCPP status from this channel because the Wallbox
+	// session events provide a fresher, more accurate view of the connector state.
 }
 
 func ocppCodeFromSessionState(state string) (int, bool) {
