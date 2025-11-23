@@ -883,6 +883,10 @@ func (w *Wallbox) ProcessChargerStatusEvent(payload string) {
 		return
 	}
 
+	if err := w.redisClient.Set(context.Background(), "bridge:last_ocpp_status", payload, 0).Err(); err != nil {
+		log.Printf("Failed to cache last OCPP status event: %v", err)
+	}
+
 	if event.Header.MessageID != "CHARGER_STATUS_CHANGED" {
 		return
 	}
