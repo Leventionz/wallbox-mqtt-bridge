@@ -26,7 +26,7 @@ This open-source project connects your Wallbox fully locally to Home Assistant, 
 3. `ssh` to your Wallbox and run
 
 ```sh
-curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.11.21/install.sh > install.sh && bash install.sh
+curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.11.23/install.sh > install.sh && bash install.sh
 ```
 
 Note: To upgrade to new version, simply run the command from step 3 again.
@@ -57,20 +57,17 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 ## 6.7.33 bridge overview
 
 - **True cable detection** – `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes (177/178/193/194/195).
-- **Live OCPP status** – `sensor.wallbox_ocpp_status` is now driven exclusively by `EVENT_SESSION_UPDATE` telemetry from `/wbx/charger_state_machine/events` and `/wbx/charging_regulation/in/session`, so there is no dependency on `journalctl` or the Wallbox OCPP log feed.
+- **Live OCPP status** – `sensor.wallbox_ocpp_status` now follows the `/wbx/domain_bus/event/CHARGER_STATUS_CHANGED` feed so we ingest the exact status that `ocppwallbox` publishes (no journald, no POSIX queues).
 - **Mismatch awareness + heal** – `binary_sensor.wallbox_ocpp_mismatch` flips on whenever the control pilot reports a connected/charging state but OCPP reports Available/SuspendedEV/EVSE/Unavailable/Faulted. If auto-heal is enabled the bridge restarts both `wallboxsmachine.service` **and** `ocppwallbox.service` after `ocpp_mismatch_seconds` (default 60 s) and enforces a restart cooldown. All three sensors (`ocpp_status`, `ocpp_mismatch`, `ocpp_last_restart`) publish even when auto-heal is disabled. **DO NOT ENABLE THE AUTO-HEAL IF YOU DO NOT USE OCPP**
 - **Installer polish** – the refreshed `install.sh` tolerates missing services, fixes Python 3.5 `configparser` / `pathlib` issues, prompts for the auto-heal timers with defaults, and can optionally emit an EVCC-ready YAML snippet.
 - **Debug telemetry parity** – control-pilot voltages, duty cycle, and other `/wbx/telemetry/events` fields now populate on 6.7.33 just like 6.5/6.6, so historical dashboards survive the firmware jump.
 
-## Release highlights (bridgechannels-2025.11.21)
+## Release highlights (bridgechannels-2025.11.23)
 
-- Control-pilot driven entities strictly follow SAE J1772 state mapping so Home Assistant shows “cable disconnected” whenever the pilot remains at 12 V.
-- Telemetry debug sensors (`control_pilot_high_voltage`, duty cycle, etc.) no longer report zeroes on 6.7.x.
-- The installer can generate an EVCC-ready YAML snippet, so you can copy/paste the MQTT topics straight into EVCC without hand-editing.
-- `sensor.wallbox_ocpp_status` subscribes to both `/wbx/charger_state_machine/events` and `/wbx/charging_regulation/in/session` to mirror live `EVENT_SESSION_UPDATE` states (Charging2, Finish, Lock, Ready, Connected5, etc.) with no `journalctl` fallback.
-- Added `sensor.wallbox_control_pilot_state` (letter notation) and new debug sensors for bridge firmware (`sensor.wallbox_bridge_version`) plus charger firmware (`sensor.wallbox_firmware_version`).
-- `install.sh` is safe to re-run on partially installed systems (missing services no longer abort the script) and is compatible with the Python 3.5 stack on the Wallbox.
-- New always-on OCPP sensors (`sensor.ocpp_status`, `binary_sensor.ocpp_mismatch`, `sensor.ocpp_last_restart`) plus an optional self-heal that restarts **both** `wallboxsmachine.service` and `ocppwallbox.service` whenever the backend thinks the car is unplugged but the control pilot is still connected **THIS IS EXPERIMENTAL - Once again please be careful with enabling this if you do not have this problem and definately do not enable if you do not use OCPP**.
+- **Redis-native OCPP feed** – the bridge now subscribes to `/wbx/domain_bus/event/CHARGER_STATUS_CHANGED`, so `sensor.wallbox_ocpp_status`, the mismatch logic, and the optional self-heal all reflect the exact value emitted by `ocppwallbox` even when Octopus throttles charging.
+- **Cleaner telemetry + new debug sensors** – every `SENSOR_*` resource metric (CPU usage, threads, memory, signal strength, etc.) is mapped into the Redis telemetry struct so log spam disappears and enabling `debug_sensors = true` exposes the extra data instantly.
+- **Accurate version reporting** – builds embed the release tag (e.g. `bridgechannels-2025.11.23`) so both `sensor.wallbox_bridge_version` and the Home Assistant device `sw_version` tell you the exact binary + Wallbox firmware pair that is running.
+- **Installer defaults to 60 s mismatch** – rerunning `install.sh` not only upgrades the binary but also keeps the safer 60 s mismatch default and can regenerate the EVCC helper snippet on demand.
 
 ## OCPP self-healing & sensors
 

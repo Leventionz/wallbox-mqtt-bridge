@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-RELEASE_TAG="${BRIDGE_VERSION:-bridgechannels-2025.11.21}"
+RELEASE_TAG="${BRIDGE_VERSION:-bridgechannels-2025.11.23}"
 BASE_URL="${BRIDGE_BASE_URL:-https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/${RELEASE_TAG}}"
 INI_FILE=~/mqtt-bridge/bridge.ini
 
