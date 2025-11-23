@@ -1,12 +1,15 @@
 package wallbox
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os/exec"
 	"reflect"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -274,6 +277,8 @@ type Wallbox struct {
 	ChargerType          string `db:"charger_type"`
 	telemetryOCPPStatus  int
 	telemetryOCPPUpdated time.Time
+	journalOCPPStatus    int
+	journalOCPPUpdated   time.Time
 	ocppStatusMux        sync.RWMutex
 	// HasTelemetry becomes true once we have successfully processed at least
 	// one telemetry event and mapped it into RedisTelemetry. This lets higher
@@ -283,6 +288,7 @@ type Wallbox struct {
 	pubsub                *redis.PubSub
 	eventHandler          func(channel string, message string)
 	sessionEnergyBaseline float64
+	journalStopCh         chan struct{}
 }
 
 func New() *Wallbox {
@@ -304,6 +310,7 @@ func New() *Wallbox {
 	})
 
 	w.telemetryOCPPStatus = -1
+	w.journalOCPPStatus = -1
 
 	return &w
 }
@@ -626,6 +633,9 @@ func (w *Wallbox) IsChargingPilot() bool {
 }
 
 func (w *Wallbox) OCPPStatusCode() int {
+	if code, ok := w.getJournalOCPPStatus(); ok {
+		return code
+	}
 	if code, ok := w.getTelemetryOCPPStatus(); ok {
 		return code
 	}
@@ -651,6 +661,25 @@ func (w *Wallbox) getTelemetryOCPPStatus() (int, bool) {
 	w.ocppStatusMux.RLock()
 	code := w.telemetryOCPPStatus
 	ts := w.telemetryOCPPUpdated
+	w.ocppStatusMux.RUnlock()
+
+	if code >= 0 && time.Since(ts) < 10*time.Minute {
+		return code, true
+	}
+	return 0, false
+}
+
+func (w *Wallbox) SetJournalOCPPStatus(code int) {
+	w.ocppStatusMux.Lock()
+	w.journalOCPPStatus = code
+	w.journalOCPPUpdated = time.Now()
+	w.ocppStatusMux.Unlock()
+}
+
+func (w *Wallbox) getJournalOCPPStatus() (int, bool) {
+	w.ocppStatusMux.RLock()
+	code := w.journalOCPPStatus
+	ts := w.journalOCPPUpdated
 	w.ocppStatusMux.RUnlock()
 
 	if code >= 0 && time.Since(ts) < 10*time.Minute {
@@ -758,6 +787,89 @@ func (w *Wallbox) StopRedisSubscriptions() {
 	if w.pubsub != nil {
 		w.pubsub.Close()
 	}
+}
+
+// StartOCPPJournalWatcher spawns a background goroutine that tails the
+// ocppwallbox journald stream and extracts OCPP StatusNotification "status"
+// values (Available, Charging, SuspendedEV, etc). These are mapped to
+// numeric OCPP status codes and fed into SetJournalOCPPStatus, which is
+// preferred by OCPPStatusCode over session/telemetry-based fallbacks.
+func (w *Wallbox) StartOCPPJournalWatcher() {
+	// Avoid starting multiple watchers if called more than once.
+	if w.journalStopCh != nil {
+		return
+	}
+
+	stopCh := make(chan struct{})
+	w.journalStopCh = stopCh
+
+	go func() {
+		defer func() {
+			// Best-effort cleanup of the child process if we managed to start it.
+			w.journalStopCh = nil
+		}()
+
+		cmd := exec.Command("journalctl",
+			"-u", "ocppwallbox.service",
+			"-f",          // follow new entries
+			"-n", "0",     // do not replay historical logs
+			"-o", "cat",   // message only, no metadata
+			"-q",          // quiet
+		)
+
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			log.Printf("OCPP journal: failed to open stdout: %v", err)
+			return
+		}
+
+		if err := cmd.Start(); err != nil {
+			log.Printf("OCPP journal: failed to start journalctl: %v", err)
+			return
+		}
+		defer func() {
+			_ = cmd.Process.Kill()
+			_, _ = cmd.Process.Wait()
+		}()
+
+		scanner := bufio.NewScanner(stdout)
+		for {
+			select {
+			case <-stopCh:
+				return
+			default:
+			}
+
+			if !scanner.Scan() {
+				if err := scanner.Err(); err != nil {
+					log.Printf("OCPP journal: scanner error: %v", err)
+				}
+				return
+			}
+
+			line := scanner.Text()
+			status, ok := parseOCPPStatusFromLogLine(line)
+			if !ok {
+				continue
+			}
+
+			if code, found := LookupOCPPStatusCode(status); found {
+				w.SetJournalOCPPStatus(code)
+			} else {
+				log.Printf("OCPP journal: unknown StatusNotification status %q in line: %s", status, line)
+			}
+		}
+	}()
+}
+
+// StopOCPPJournalWatcher signals the background journal watcher (if any) to
+// stop and lets the goroutine tear down its journalctl process.
+func (w *Wallbox) StopOCPPJournalWatcher() {
+	if w.journalStopCh == nil {
+		return
+	}
+	close(w.journalStopCh)
+	w.journalStopCh = nil
 }
 
 // StartTimeConstrRedisSubscriptions starts Redis subscriptions and automatically stops them after the specified duration
@@ -898,6 +1010,27 @@ func (w *Wallbox) ProcessChargerStatusEvent(payload string) {
 	// We still consume the event for other telemetry fields and to cache the payload,
 	// but we no longer override the OCPP status from this channel because the Wallbox
 	// session events provide a fresher, more accurate view of the connector state.
+}
+
+var statusNotificationStatusRe = regexp.MustCompile(`status"\s*:\s*"([^"]+)"`)
+
+// parseOCPPStatusFromLogLine extracts the OCPP StatusNotification "status" field
+// from an ocppwallbox journald line. It returns the status string (e.g. "Available")
+// and true on success, or ""/false if the line does not contain a parsable
+// StatusNotification payload.
+func parseOCPPStatusFromLogLine(line string) (string, bool) {
+	if !strings.Contains(line, "StatusNotification") {
+		return "", false
+	}
+	matches := statusNotificationStatusRe.FindStringSubmatch(line)
+	if len(matches) < 2 {
+		return "", false
+	}
+	status := strings.TrimSpace(matches[1])
+	if status == "" {
+		return "", false
+	}
+	return status, true
 }
 
 func ocppCodeFromSessionState(state string) (int, bool) {

@@ -36,6 +36,10 @@ func RunBridge(configPath string) {
 
 	w := wallbox.New()
 	w.RefreshData()
+	w.StartRedisSubscriptions()
+	w.StartOCPPJournalWatcher()
+	defer w.StopRedisSubscriptions()
+	defer w.StopOCPPJournalWatcher()
 
 	serialNumber := w.SerialNumber()
 	firmwareVersion := w.FirmwareVersion()
@@ -142,10 +146,6 @@ func RunBridge(configPath string) {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-
-	// for debugging purposes, only run for the first 2 minutes
-	// w.StartTimeConstrainedRedisSubscriptions(2 * time.Minute)
-	w.StartRedisSubscriptions()
 
 	for {
 		select {
