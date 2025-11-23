@@ -18,12 +18,13 @@ import (
 
 type DataCache struct {
 	SQL struct {
-		Lock                  int     `db:"lock"`
-		ChargingEnable        int     `db:"charging_enable"`
-		MaxChargingCurrent    int     `db:"max_charging_current"`
-		HaloBrightness        int     `db:"halo_brightness"`
-		CumulativeAddedEnergy float64 `db:"cumulative_added_energy"`
-		AddedRange            float64 `db:"added_range"`
+		Lock                     int     `db:"lock"`
+		ChargingEnable           int     `db:"charging_enable"`
+		MaxChargingCurrent       int     `db:"max_charging_current"`
+		HaloBrightness           int     `db:"halo_brightness"`
+		CumulativeAddedEnergy    float64 `db:"cumulative_added_energy"`
+		AddedRange               float64 `db:"added_range"`
+		ActiveSessionEnergyTotal float64 `db:"active_session_energy_total"`
 	}
 
 	RedisState struct {
@@ -349,7 +350,10 @@ func (w *Wallbox) RefreshData() {
 		"  `power_outage_values`.`charged_energy` AS cumulative_added_energy," +
 		"  IF(`active_session`.`unique_id` != 0," +
 		"    `active_session`.`charged_range`," +
-		"    `latest_session`.`charged_range`) AS added_range " +
+		"    `latest_session`.`charged_range`) AS added_range," +
+		"  IF(`active_session`.`unique_id` != 0," +
+		"    `active_session`.`energy_total`," +
+		"    0) AS active_session_energy_total " +
 		"FROM `wallbox_config`," +
 		"    `active_session`," +
 		"    `power_outage_values`," +
@@ -690,6 +694,10 @@ func (w *Wallbox) S2Open() int {
 }
 
 func (w *Wallbox) AddedEnergy() float64 {
+	if w.Data.SQL.ActiveSessionEnergyTotal > 0 {
+		return w.Data.SQL.ActiveSessionEnergyTotal
+	}
+
 	if w.HasTelemetry && w.Data.RedisTelemetry.InternalMeterEnergy != 0 {
 		status := int(w.Data.RedisTelemetry.StateMachine)
 		current := w.Data.RedisTelemetry.InternalMeterEnergy
@@ -907,8 +915,11 @@ func ocppCodeFromSessionState(state string) (int, bool) {
 		return 9, true
 	}
 
-	if strings.HasPrefix(normalized, "connected") ||
-		strings.HasPrefix(normalized, "waiting") ||
+	if strings.HasPrefix(normalized, "connected") {
+		return 5, true
+	}
+
+	if strings.HasPrefix(normalized, "waiting") ||
 		strings.HasPrefix(normalized, "mid") ||
 		strings.HasPrefix(normalized, "queue") {
 		return 2, true

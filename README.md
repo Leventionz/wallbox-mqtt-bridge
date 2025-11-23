@@ -64,9 +64,10 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 ## Release highlights (bridgechannels-2025.11.23)
 
-- **Redis-native OCPP feed** – the bridge subscribes to `/wbx/domain_bus/event/CHARGER_STATUS_CHANGED`, so `sensor.wallbox_ocpp_status`, the mismatch logic, and the optional self-heal all mirror the exact status emitted by `ocppwallbox`, even when Octopus throttles charging. There is no longer any dependency on journald or POSIX queues.
+- **Session-driven OCPP status** – `sensor.wallbox_ocpp_status` now prefers the Wallbox session events (Charging2, Connected5, Finish, etc.) and maps them onto the OCPP status table (`Connected*` → SuspendedEV, `Finish/Lock` → Finishing, etc.). We still ingest `/wbx/domain_bus/event/CHARGER_STATUS_CHANGED` for diagnostics, but the HA sensor stays aligned with the provider’s StatusNotifications.
+- **Accurate session energy** – `sensor.wallbox_added_energy` surfaces `active_session.energy_total` straight from MySQL, so you get the exact Wh the Wallbox reports without relying on telemetry baselines or reset heuristics.
 - **Cleaner telemetry + leaner HA entities** – every `SENSOR_*` resource metric (CPU usage, threads, memory, signal strength, etc.) is mapped into the Redis telemetry struct so log spam disappears, but only the useful ones are exposed in Home Assistant. Debug mode still has access to the raw values without bloating dashboards.
-- **Accurate version reporting** – builds embed the release tag plus the Git commit (e.g. `bridgechannels-2025.11.23+31c1f88`), so both `sensor.wallbox_bridge_version` and the Home Assistant device `sw_version` tell you the exact binary + Wallbox firmware pair that is running.
+- **Accurate version reporting** – builds embed the release tag plus the Git commit (e.g. `bridgechannels-2025.11.23+36fbf5e`), so both `sensor.wallbox_bridge_version` and the Home Assistant device `sw_version` tell you the exact binary + Wallbox firmware pair that is running.
 - **EVCC helper alignment** – the optional `evcc-wallbox.yaml` now references `control_pilot_state/state`, matching the SAE letter entity that the main dashboard uses, which makes EVCC’s status tracking clearer.
 - **Installer defaults to 60 s mismatch** – rerunning `install.sh` not only upgrades the binary but also keeps the safer 60 s mismatch default, tolerates missing services, and can regenerate the EVCC helper snippet on demand.
 
