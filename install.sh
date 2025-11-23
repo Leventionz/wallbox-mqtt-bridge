@@ -114,7 +114,7 @@ chargers:
     type: custom
     status:
       source: mqtt
-      topic: wallbox_${serial_number}/control_pilot/state
+      topic: wallbox_${serial_number}/control_pilot_state/state
     enabled:
       source: mqtt
       topic: wallbox_${serial_number}/charging_enable/state

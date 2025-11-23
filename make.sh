@@ -1,8 +1,18 @@
 set -x
 
 VERSION="${BRIDGE_VERSION:-}"
+COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+DIRTY=""
+if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+    DIRTY="+dirty"
+fi
+
 if [ -z "$VERSION" ]; then
-    VERSION="$(git describe --tags --dirty --always 2>/dev/null || echo dev)"
+    VERSION="$(git describe --tags --always 2>/dev/null || echo dev)"
+fi
+
+if [ "$COMMIT" != "unknown" ]; then
+    VERSION="${VERSION}+${COMMIT}${DIRTY}"
 fi
 
 LDFLAGS="-s -w -X=wallbox-mqtt-bridge/app.buildVersion=${VERSION}"

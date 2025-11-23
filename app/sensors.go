@@ -877,14 +877,6 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category": "diagnostic",
 			},
 		},
-		"power_sharing_status": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PowerSharingStatus) },
-			Config: map[string]string{
-				"name":            "Power Sharing Status",
-				"entity_category": "diagnostic",
-			},
-		},
 		"temperature_l1_sensor": {
 			Component: "sensor",
 			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.TempL1) },
@@ -955,51 +947,11 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 				"entity_category":             "diagnostic",
 			},
 		},
-		"power_relay_management_command": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PowerRelayManagementCommand) },
-			Config: map[string]string{
-				"name":            "Power Relay Management Command",
-				"entity_category": "diagnostic",
-			},
-		},
 		"control_mode": {
 			Component: "sensor",
 			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ControlMode) },
 			Config: map[string]string{
 				"name":            "Control Mode",
-				"entity_category": "diagnostic",
-			},
-		},
-		"pms_dominant_feature": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSDominantFeature) },
-			Config: map[string]string{
-				"name":            "PMS Dominant Feature",
-				"entity_category": "diagnostic",
-			},
-		},
-		"pms_metadata": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSMetadata) },
-			Config: map[string]string{
-				"name":            "PMS Metadata",
-				"entity_category": "diagnostic",
-			},
-		},
-		"pms_phase_switch": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PMSPhaseSwitch) },
-			Config: map[string]string{
-				"name":            "PMS Phase Switch",
-				"entity_category": "diagnostic",
-			},
-		},
-		"gsm_reco_trigger": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GSMRecoTrigger) },
-			Config: map[string]string{
-				"name":            "GSM Reconnect Trigger",
 				"entity_category": "diagnostic",
 			},
 		},
@@ -1035,30 +987,6 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ConnectionType) },
 			Config: map[string]string{
 				"name":            "Connection Type",
-				"entity_category": "diagnostic",
-			},
-		},
-		"get_charger_config_send": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigSend) },
-			Config: map[string]string{
-				"name":            "Get Charger Config Send Count",
-				"entity_category": "diagnostic",
-			},
-		},
-		"get_charger_config_receive": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigReceive) },
-			Config: map[string]string{
-				"name":            "Get Charger Config Receive Count",
-				"entity_category": "diagnostic",
-			},
-		},
-		"get_charger_config_calls": {
-			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.GetChargerConfigCalls) },
-			Config: map[string]string{
-				"name":            "Get Charger Config Calls",
 				"entity_category": "diagnostic",
 			},
 		},
