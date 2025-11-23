@@ -2,7 +2,7 @@
 
 This open-source project connects your Wallbox fully locally to Home Assistant, providing you with unparalleled speed and reliability.
 
-> adds full telemetry support for firmware 6.7.x+ (control pilot, state machine, session energy, Power Boost, etc.) and keeps older firmware working automatically via legacy fallbacks.
+> adds full telemetry support for firmware 6.7.x+ (control pilot, state machine, session energy, Power Boost, etc.) and tries to keep older firmware working automatically via legacy fallbacks.
 
 > **Please note this is only tested against firmware 6.7.33 on the Pulsar Plus; whilst I have tried to retain backward comptability it is likely you may have issues with some sensor readings if different**
 
