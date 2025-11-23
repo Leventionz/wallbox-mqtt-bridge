@@ -33,8 +33,6 @@ curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/b
 
 Note: To upgrade to new version, simply run the command from step 3 again.
 
-> Tip: set `BRIDGE_VERSION=<tag>` in front of the command if you want to pin a different release (e.g. testing a prerelease build).
-
 ## EVCC quickstart
 
 - The installer now asks whether you want an EVCC helper file.
