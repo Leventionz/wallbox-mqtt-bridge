@@ -1,25 +1,20 @@
 package bridge
 
 import (
-	"bufio"
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"runtime/debug"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"wallbox-mqtt-bridge/app/wallbox"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 var (
@@ -41,8 +36,6 @@ func RunBridge(configPath string) {
 
 	w := wallbox.New()
 	w.RefreshData()
-	stopJournal := startOCPPJournalWatcher(w)
-	defer stopJournal()
 
 	serialNumber := w.SerialNumber()
 	firmwareVersion := w.FirmwareVersion()
@@ -160,13 +153,11 @@ func RunBridge(configPath string) {
 			w.RefreshData()
 			now := time.Now()
 
-			connected := w.HasTelemetry && w.CableConnected() == 1
+			pilotConnected := w.HasTelemetry && (w.CableConnected() == 1 || w.IsChargingPilot())
 			ocppCode := w.OCPPStatusCode()
 			ocppIndicatesDisconnect := w.OCPPIndicatesDisconnect()
 
-			chargingPilot := w.IsChargingPilot()
-
-			if connected && ocppIndicatesDisconnect && !chargingPilot {
+			if pilotConnected && ocppIndicatesDisconnect {
 				if mismatchStart.IsZero() {
 					mismatchStart = now
 					log.Printf("OCPP mismatch detected: pilot=%d (%s), OCPP=%d (%s)", w.ControlPilotCode(), w.ControlPilotStatus(), ocppCode, w.OCPPStatusDescription())
@@ -247,182 +238,4 @@ func bridgeVersion() string {
 		return buildInfo.Main.Version
 	}
 	return "dev"
-}
-func startOCPPJournalWatcher(w *wallbox.Wallbox) func() {
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		log.Println("Starting OCPP journal watcher...")
-		if err := watchOCPPJournal(ctx, w); err != nil && !errors.Is(err, context.Canceled) {
-			log.Printf("OCPP journal watcher exited: %v", err)
-		} else {
-			log.Println("OCPP journal watcher stopped")
-		}
-	}()
-	return cancel
-}
-
-var statusRegex = regexp.MustCompile(`status"\s*:\s*"([^"]+)"`)
-
-func watchOCPPJournal(ctx context.Context, w *wallbox.Wallbox) error {
-	backoff := time.Second
-	const maxBackoff = 30 * time.Second
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		cmd, scanner, err := startJournalCommand(ctx, "json")
-		mode := "json"
-		if err != nil {
-			log.Printf("Falling back to journalctl cat mode: %v", err)
-			cmd, scanner, err = startJournalCommand(ctx, "cat")
-			mode = "cat"
-		}
-		if err != nil {
-			log.Printf("OCPP journal watcher failed to start: %v (retrying in %s)", err, backoff)
-			time.Sleep(backoff)
-			if backoff < maxBackoff {
-				backoff *= 2
-			}
-			continue
-		}
-
-		if mode == "json" {
-			log.Println("OCPP journal watcher running in json mode")
-		} else {
-			log.Println("OCPP journal watcher running in cat mode (regex parser)")
-		}
-
-		err = streamOCPPJournal(ctx, w, cmd, scanner)
-		if err == nil || errors.Is(err, context.Canceled) {
-			return err
-		}
-
-		log.Printf("OCPP journal watcher exited: %v (retrying in %s)", err, backoff)
-		time.Sleep(backoff)
-		if backoff < maxBackoff {
-			backoff *= 2
-		}
-	}
-}
-
-func streamOCPPJournal(ctx context.Context, w *wallbox.Wallbox, cmd *exec.Cmd, scanner *bufio.Scanner) error {
-	defer func() {
-		cmd.Process.Kill()
-		cmd.Wait()
-	}()
-
-	var lastStatus atomic.Int64
-	lastStatus.Store(time.Now().UnixNano())
-	var warned atomic.Bool
-
-	warnTicker := time.NewTicker(30 * time.Second)
-	defer warnTicker.Stop()
-
-	stopWarn := make(chan struct{})
-	defer close(stopWarn)
-
-	go func() {
-		for {
-			select {
-			case <-warnTicker.C:
-				if time.Since(time.Unix(0, lastStatus.Load())) > 30*time.Second {
-					if warned.CompareAndSwap(false, true) {
-						log.Println("OCPP journal watcher has not seen a StatusNotification for 30s; telemetry values will be used until new log entries arrive")
-					}
-				}
-			case <-stopWarn:
-				return
-			}
-		}
-	}()
-
-	for scanner.Scan() {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		line := scanner.Bytes()
-		status := extractStatusFromJournal(line)
-		if status == "" {
-			continue
-		}
-
-		lastStatus.Store(time.Now().UnixNano())
-		warned.Store(false)
-
-		if code, ok := wallbox.LookupOCPPStatusCode(status); ok {
-			log.Printf("OCPP journal: status=%s code=%d", status, code)
-			w.SetOCPPStatusOverride(code)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return io.EOF
-}
-
-func extractStatusFromJournal(line []byte) string {
-	message := parseJournalMessage(line)
-	if status := extractStatusFromString(message); status != "" {
-		return status
-	}
-
-	if status := extractStatusFromString(string(line)); status != "" {
-		return status
-	}
-
-	return ""
-}
-
-func parseJournalMessage(line []byte) string {
-	var entry struct {
-		Message string `json:"MESSAGE"`
-	}
-
-	if err := json.Unmarshal(line, &entry); err == nil && entry.Message != "" {
-		return entry.Message
-	}
-
-	// fallback to cat mode line
-	return string(line)
-}
-
-func extractStatusFromString(s string) string {
-	if s == "" || !strings.Contains(s, "StatusNotification") {
-		return ""
-	}
-	matches := statusRegex.FindStringSubmatch(s)
-	if len(matches) >= 2 {
-		return matches[1]
-	}
-	return ""
-}
-
-func startJournalCommand(ctx context.Context, mode string) (*exec.Cmd, *bufio.Scanner, error) {
-	args := []string{"-u", "ocppwallbox.service", "-f"}
-	if mode == "json" {
-		args = append(args, "-o", "json")
-	} else {
-		args = append(args, "-o", "cat")
-	}
-
-	cmd := exec.CommandContext(ctx, "journalctl", args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if err := cmd.Start(); err != nil {
-		return nil, nil, err
-	}
-
-	return cmd, bufio.NewScanner(stdout), nil
 }

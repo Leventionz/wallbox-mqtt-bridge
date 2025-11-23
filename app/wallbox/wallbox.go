@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -124,13 +125,13 @@ type DataCache struct {
 }
 
 type Wallbox struct {
-	redisClient           *redis.Client
-	sqlClient             *sqlx.DB
-	Data                  DataCache
-	ChargerType           string `db:"charger_type"`
-	ocppStatusOverride    int
-	ocppStatusUpdated     time.Time
-	ocppStatusOverrideMux sync.RWMutex
+	redisClient          *redis.Client
+	sqlClient            *sqlx.DB
+	Data                 DataCache
+	ChargerType          string `db:"charger_type"`
+	telemetryOCPPStatus  int
+	telemetryOCPPUpdated time.Time
+	ocppStatusMux        sync.RWMutex
 	// HasTelemetry becomes true once we have successfully processed at least
 	// one telemetry event and mapped it into RedisTelemetry. This lets higher
 	// layers prefer telemetry-based values on newer firmware while keeping a
@@ -159,7 +160,7 @@ func New() *Wallbox {
 		DB:       0,
 	})
 
-	w.ocppStatusOverride = -1
+	w.telemetryOCPPStatus = -1
 
 	return &w
 }
@@ -479,7 +480,7 @@ func (w *Wallbox) IsChargingPilot() bool {
 }
 
 func (w *Wallbox) OCPPStatusCode() int {
-	if code, ok := w.getOCPPStatusOverride(); ok {
+	if code, ok := w.getTelemetryOCPPStatus(); ok {
 		return code
 	}
 	return int(w.Data.RedisTelemetry.OCPPStatus)
@@ -493,18 +494,18 @@ func (w *Wallbox) OCPPIndicatesDisconnect() bool {
 	return ocppStatusIndicatesDisconnect(w.OCPPStatusCode())
 }
 
-func (w *Wallbox) SetOCPPStatusOverride(code int) {
-	w.ocppStatusOverrideMux.Lock()
-	w.ocppStatusOverride = code
-	w.ocppStatusUpdated = time.Now()
-	w.ocppStatusOverrideMux.Unlock()
+func (w *Wallbox) SetTelemetryOCPPStatus(code int) {
+	w.ocppStatusMux.Lock()
+	w.telemetryOCPPStatus = code
+	w.telemetryOCPPUpdated = time.Now()
+	w.ocppStatusMux.Unlock()
 }
 
-func (w *Wallbox) getOCPPStatusOverride() (int, bool) {
-	w.ocppStatusOverrideMux.RLock()
-	code := w.ocppStatusOverride
-	ts := w.ocppStatusUpdated
-	w.ocppStatusOverrideMux.RUnlock()
+func (w *Wallbox) getTelemetryOCPPStatus() (int, bool) {
+	w.ocppStatusMux.RLock()
+	code := w.telemetryOCPPStatus
+	ts := w.telemetryOCPPUpdated
+	w.ocppStatusMux.RUnlock()
 
 	if code >= 0 && time.Since(ts) < 10*time.Minute {
 		return code, true
@@ -576,6 +577,8 @@ func (w *Wallbox) SetEventHandler(handler func(channel string, message string)) 
 func (w *Wallbox) StartRedisSubscriptions() {
 	channels := []string{
 		"/wbx/telemetry/events",
+		"/wbx/charger_state_machine/events",
+		"/wbx/charging_regulation/in/session",
 	}
 
 	w.pubsub = w.redisClient.Subscribe(context.Background(), channels...)
@@ -584,8 +587,11 @@ func (w *Wallbox) StartRedisSubscriptions() {
 	go func() {
 		ch := w.pubsub.Channel()
 		for msg := range ch {
-			if msg.Channel == "/wbx/telemetry/events" {
+			switch msg.Channel {
+			case "/wbx/telemetry/events":
 				w.ProcessTelemetryEvent(msg.Payload)
+			case "/wbx/charger_state_machine/events", "/wbx/charging_regulation/in/session":
+				w.ProcessSessionUpdateEvent(msg.Payload)
 			}
 
 			if w.eventHandler != nil {
@@ -621,6 +627,22 @@ type TelemetryEvent struct {
 			Timestamp string   `json:"timestamp"`
 			Value     float64  `json:"value"`
 		} `json:"sensors"`
+	} `json:"body"`
+	Header struct {
+		MessageID string `json:"message_id"`
+		Source    string `json:"source"`
+		Timestamp string `json:"timestamp"`
+	} `json:"header"`
+}
+
+type SessionUpdateEvent struct {
+	Body struct {
+		Session struct {
+			State         string `json:"state"`
+			InSession     bool   `json:"in_session"`
+			ControlMode   string `json:"control_mode"`
+			ControlAction string `json:"control_action"`
+		} `json:"session"`
 	} `json:"body"`
 	Header struct {
 		MessageID string `json:"message_id"`
@@ -672,4 +694,69 @@ func (w *Wallbox) updateTelemetryField(sensorID string, value float64) {
 	// If we get here, we didn't find a matching field (might be a new sensor we're not tracking yet)
 	// We could log this for debugging purposes
 	log.Printf("No matching struct field found for sensor ID: %s", sensorID)
+}
+
+func (w *Wallbox) ProcessSessionUpdateEvent(payload string) {
+	var event SessionUpdateEvent
+	if err := json.Unmarshal([]byte(payload), &event); err != nil {
+		log.Printf("Error unmarshalling session event: %v", err)
+		return
+	}
+
+	if event.Header.MessageID != "EVENT_SESSION_UPDATE" {
+		return
+	}
+
+	state := event.Body.Session.State
+	if state == "" {
+		return
+	}
+
+	if code, ok := ocppCodeFromSessionState(state); ok {
+		w.SetTelemetryOCPPStatus(code)
+	} else {
+		log.Printf("Unmapped session state for OCPP status: %s", state)
+	}
+}
+
+func ocppCodeFromSessionState(state string) (int, bool) {
+	normalized := normalizeSessionState(state)
+	switch normalized {
+	case "ready":
+		return 1, true
+	case "finish", "lock", "waitunlock":
+		return 6, true
+	case "reserved":
+		return 7, true
+	case "updating", "unavailable", "psunconfig":
+		return 8, true
+	case "error", "unviable":
+		return 9, true
+	}
+
+	if strings.HasPrefix(normalized, "connected") ||
+		strings.HasPrefix(normalized, "waiting") ||
+		strings.HasPrefix(normalized, "mid") ||
+		strings.HasPrefix(normalized, "queue") {
+		return 2, true
+	}
+
+	if strings.HasPrefix(normalized, "charging") ||
+		strings.HasPrefix(normalized, "discharging") {
+		return 3, true
+	}
+
+	if strings.HasPrefix(normalized, "paused") ||
+		strings.HasPrefix(normalized, "scheduled") {
+		return 5, true
+	}
+
+	return 0, false
+}
+
+func normalizeSessionState(state string) string {
+	normalized := strings.ToLower(strings.TrimSpace(state))
+	normalized = strings.ReplaceAll(normalized, " ", "")
+	normalized = strings.ReplaceAll(normalized, "_", "")
+	return normalized
 }
