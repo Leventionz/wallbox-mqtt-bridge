@@ -121,6 +121,148 @@ type DataCache struct {
 		GetChargerConfigSend    float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_SEND"`
 		GetChargerConfigReceive float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_RECEIVE"`
 		GetChargerConfigCalls   float64 `redis:"telemetry.SENSOR_GET_CHARGER_CONFIG_CALLS"`
+
+		// Service resource telemetry
+		NetworkManagerCPUUsage    float64 `redis:"telemetry.SENSOR_NETWORKMANAGER_CPU_USAGE"`
+		NetworkManagerThreads     float64 `redis:"telemetry.SENSOR_NETWORKMANAGER_THREADS"`
+		NetworkManagerMemory      float64 `redis:"telemetry.SENSOR_NETWORKMANAGER_MEMORY"`
+		NetworkManagerSimpleState float64 `redis:"telemetry.SENSOR_NETWORKMANAGER_SIMPLE_STATE"`
+
+		BLEWallboxCPUUsage    float64 `redis:"telemetry.SENSOR_BLEWALLBOX_CPU_USAGE"`
+		BLEWallboxThreads     float64 `redis:"telemetry.SENSOR_BLEWALLBOX_THREADS"`
+		BLEWallboxMemory      float64 `redis:"telemetry.SENSOR_BLEWALLBOX_MEMORY"`
+		BLEWallboxSimpleState float64 `redis:"telemetry.SENSOR_BLEWALLBOX_SIMPLE_STATE"`
+
+		BluetoothGatewayCPUUsage    float64 `redis:"telemetry.SENSOR_BLUETOOTH_GATEWAY_CPU_USAGE"`
+		BluetoothGatewayThreads     float64 `redis:"telemetry.SENSOR_BLUETOOTH_GATEWAY_THREADS"`
+		BluetoothGatewayMemory      float64 `redis:"telemetry.SENSOR_BLUETOOTH_GATEWAY_MEMORY"`
+		BluetoothGatewaySimpleState float64 `redis:"telemetry.SENSOR_BLUETOOTH_GATEWAY_SIMPLE_STATE"`
+
+		CloudPubSubCommandCPUUsage    float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_COMMAND_CPU_USAGE"`
+		CloudPubSubCommandThreads     float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_COMMAND_THREADS"`
+		CloudPubSubCommandMemory      float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_COMMAND_MEMORY"`
+		CloudPubSubCommandSimpleState float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_COMMAND_SIMPLE_STATE"`
+
+		CloudPubSubTelemetryCPUUsage    float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_TELEMETRY_CPU_USAGE"`
+		CloudPubSubTelemetryThreads     float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_TELEMETRY_THREADS"`
+		CloudPubSubTelemetryMemory      float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_TELEMETRY_MEMORY"`
+		CloudPubSubTelemetrySimpleState float64 `redis:"telemetry.SENSOR_CLOUD_PUB_SUB_TELEMETRY_SIMPLE_STATE"`
+
+		CredentialsGeneratorCPUUsage    float64 `redis:"telemetry.SENSOR_CREDENTIALS_GENERATOR_CPU_USAGE"`
+		CredentialsGeneratorThreads     float64 `redis:"telemetry.SENSOR_CREDENTIALS_GENERATOR_THREADS"`
+		CredentialsGeneratorMemory      float64 `redis:"telemetry.SENSOR_CREDENTIALS_GENERATOR_MEMORY"`
+		CredentialsGeneratorSimpleState float64 `redis:"telemetry.SENSOR_CREDENTIALS_GENERATOR_SIMPLE_STATE"`
+
+		DBUSCPUUsage    float64 `redis:"telemetry.SENSOR_DBUS_CPU_USAGE"`
+		DBUSThreads     float64 `redis:"telemetry.SENSOR_DBUS_THREADS"`
+		DBUSMemory      float64 `redis:"telemetry.SENSOR_DBUS_MEMORY"`
+		DBUSSimpleState float64 `redis:"telemetry.SENSOR_DBUS_SIMPLE_STATE"`
+
+		Micro2WallboxCPUUsage    float64 `redis:"telemetry.SENSOR_MICRO2WALLBOX_CPU_USAGE"`
+		Micro2WallboxThreads     float64 `redis:"telemetry.SENSOR_MICRO2WALLBOX_THREADS"`
+		Micro2WallboxMemory      float64 `redis:"telemetry.SENSOR_MICRO2WALLBOX_MEMORY"`
+		Micro2WallboxSimpleState float64 `redis:"telemetry.SENSOR_MICRO2WALLBOX_SIMPLE_STATE"`
+
+		MySQLDCPUUsage    float64 `redis:"telemetry.SENSOR_MYSQLD_CPU_USAGE"`
+		MySQLDThreads     float64 `redis:"telemetry.SENSOR_MYSQLD_THREADS"`
+		MySQLDMemory      float64 `redis:"telemetry.SENSOR_MYSQLD_MEMORY"`
+		MySQLDSimpleState float64 `redis:"telemetry.SENSOR_MYSQLD_SIMPLE_STATE"`
+
+		MyWallboxCPUUsage    float64 `redis:"telemetry.SENSOR_MYWALLBOX_CPU_USAGE"`
+		MyWallboxThreads     float64 `redis:"telemetry.SENSOR_MYWALLBOX_THREADS"`
+		MyWallboxMemory      float64 `redis:"telemetry.SENSOR_MYWALLBOX_MEMORY"`
+		MyWallboxSimpleState float64 `redis:"telemetry.SENSOR_MYWALLBOX_SIMPLE_STATE"`
+
+		OCPPWallboxCPUUsage    float64 `redis:"telemetry.SENSOR_OCPPWALLBOX_CPU_USAGE"`
+		OCPPWallboxThreads     float64 `redis:"telemetry.SENSOR_OCPPWALLBOX_THREADS"`
+		OCPPWallboxMemory      float64 `redis:"telemetry.SENSOR_OCPPWALLBOX_MEMORY"`
+		OCPPWallboxSimpleState float64 `redis:"telemetry.SENSOR_OCPPWALLBOX_SIMPLE_STATE"`
+
+		OnTimeTrackCPUUsage    float64 `redis:"telemetry.SENSOR_ON_TIME_TRACK_CPU_USAGE"`
+		OnTimeTrackThreads     float64 `redis:"telemetry.SENSOR_ON_TIME_TRACK_THREADS"`
+		OnTimeTrackMemory      float64 `redis:"telemetry.SENSOR_ON_TIME_TRACK_MEMORY"`
+		OnTimeTrackSimpleState float64 `redis:"telemetry.SENSOR_ON_TIME_TRACK_SIMPLE_STATE"`
+
+		PowerManagerCPUUsage    float64 `redis:"telemetry.SENSOR_POWER_MANAGER_CPU_USAGE"`
+		PowerManagerThreads     float64 `redis:"telemetry.SENSOR_POWER_MANAGER_THREADS"`
+		PowerManagerMemory      float64 `redis:"telemetry.SENSOR_POWER_MANAGER_MEMORY"`
+		PowerManagerSimpleState float64 `redis:"telemetry.SENSOR_POWER_MANAGER_SIMPLE_STATE"`
+
+		RedisCPUUsage    float64 `redis:"telemetry.SENSOR_REDIS_CPU_USAGE"`
+		RedisThreads     float64 `redis:"telemetry.SENSOR_REDIS_THREADS"`
+		RedisMemory      float64 `redis:"telemetry.SENSOR_REDIS_MEMORY"`
+		RedisSimpleState float64 `redis:"telemetry.SENSOR_REDIS_SIMPLE_STATE"`
+
+		ResourcesMonitorCPUUsage    float64 `redis:"telemetry.SENSOR_RESOURCES_MONITOR_CPU_USAGE"`
+		ResourcesMonitorThreads     float64 `redis:"telemetry.SENSOR_RESOURCES_MONITOR_THREADS"`
+		ResourcesMonitorMemory      float64 `redis:"telemetry.SENSOR_RESOURCES_MONITOR_MEMORY"`
+		ResourcesMonitorSimpleState float64 `redis:"telemetry.SENSOR_RESOURCES_MONITOR_SIMPLE_STATE"`
+
+		ScheduleManagerCPUUsage    float64 `redis:"telemetry.SENSOR_SCHEDULE_MANAGER_CPU_USAGE"`
+		ScheduleManagerThreads     float64 `redis:"telemetry.SENSOR_SCHEDULE_MANAGER_THREADS"`
+		ScheduleManagerMemory      float64 `redis:"telemetry.SENSOR_SCHEDULE_MANAGER_MEMORY"`
+		ScheduleManagerSimpleState float64 `redis:"telemetry.SENSOR_SCHEDULE_MANAGER_SIMPLE_STATE"`
+
+		SoftwareUpdateCPUUsage    float64 `redis:"telemetry.SENSOR_SOFTWARE_UPDATE_CPU_USAGE"`
+		SoftwareUpdateThreads     float64 `redis:"telemetry.SENSOR_SOFTWARE_UPDATE_THREADS"`
+		SoftwareUpdateMemory      float64 `redis:"telemetry.SENSOR_SOFTWARE_UPDATE_MEMORY"`
+		SoftwareUpdateSimpleState float64 `redis:"telemetry.SENSOR_SOFTWARE_UPDATE_SIMPLE_STATE"`
+
+		SystemSupervisorCPUUsage    float64 `redis:"telemetry.SENSOR_SYSTEM_SUPERVISOR_CPU_USAGE"`
+		SystemSupervisorThreads     float64 `redis:"telemetry.SENSOR_SYSTEM_SUPERVISOR_THREADS"`
+		SystemSupervisorMemory      float64 `redis:"telemetry.SENSOR_SYSTEM_SUPERVISOR_MEMORY"`
+		SystemSupervisorSimpleState float64 `redis:"telemetry.SENSOR_SYSTEM_SUPERVISOR_SIMPLE_STATE"`
+
+		TelemetryServiceCPUUsage    float64 `redis:"telemetry.SENSOR_TELEMETRY_SRVC_CPU_USAGE"`
+		TelemetryServiceThreads     float64 `redis:"telemetry.SENSOR_TELEMETRY_SRVC_THREADS"`
+		TelemetryServiceMemory      float64 `redis:"telemetry.SENSOR_TELEMETRY_SRVC_MEMORY"`
+		TelemetryServiceSimpleState float64 `redis:"telemetry.SENSOR_TELEMETRY_SRVC_SIMPLE_STATE"`
+
+		WallboxCBITCPUUsage    float64 `redis:"telemetry.SENSOR_WALLBOX_CBIT_CPU_USAGE"`
+		WallboxCBITThreads     float64 `redis:"telemetry.SENSOR_WALLBOX_CBIT_THREADS"`
+		WallboxCBITMemory      float64 `redis:"telemetry.SENSOR_WALLBOX_CBIT_MEMORY"`
+		WallboxCBITSimpleState float64 `redis:"telemetry.SENSOR_WALLBOX_CBIT_SIMPLE_STATE"`
+
+		WallboxLoginCPUUsage    float64 `redis:"telemetry.SENSOR_WALLBOX_LOGIN_CPU_USAGE"`
+		WallboxLoginThreads     float64 `redis:"telemetry.SENSOR_WALLBOX_LOGIN_THREADS"`
+		WallboxLoginMemory      float64 `redis:"telemetry.SENSOR_WALLBOX_LOGIN_MEMORY"`
+		WallboxLoginSimpleState float64 `redis:"telemetry.SENSOR_WALLBOX_LOGIN_SIMPLE_STATE"`
+
+		WallboxNetworkCPUUsage    float64 `redis:"telemetry.SENSOR_WALLBOX_NETWORK_CPU_USAGE"`
+		WallboxNetworkThreads     float64 `redis:"telemetry.SENSOR_WALLBOX_NETWORK_THREADS"`
+		WallboxNetworkMemory      float64 `redis:"telemetry.SENSOR_WALLBOX_NETWORK_MEMORY"`
+		WallboxNetworkSimpleState float64 `redis:"telemetry.SENSOR_WALLBOX_NETWORK_SIMPLE_STATE"`
+
+		WallboxSMachineCPUUsage    float64 `redis:"telemetry.SENSOR_WALLBOXSMACHINE_CPU_USAGE"`
+		WallboxSMachineThreads     float64 `redis:"telemetry.SENSOR_WALLBOXSMACHINE_THREADS"`
+		WallboxSMachineMemory      float64 `redis:"telemetry.SENSOR_WALLBOXSMACHINE_MEMORY"`
+		WallboxSMachineSimpleState float64 `redis:"telemetry.SENSOR_WALLBOXSMACHINE_SIMPLE_STATE"`
+
+		WallcoAdapterCPUUsage    float64 `redis:"telemetry.SENSOR_WALLCO_ADAPTER_CPU_USAGE"`
+		WallcoAdapterThreads     float64 `redis:"telemetry.SENSOR_WALLCO_ADAPTER_THREADS"`
+		WallcoAdapterMemory      float64 `redis:"telemetry.SENSOR_WALLCO_ADAPTER_MEMORY"`
+		WallcoAdapterSimpleState float64 `redis:"telemetry.SENSOR_WALLCO_ADAPTER_SIMPLE_STATE"`
+
+		WBXChargerInfoCPUUsage    float64 `redis:"telemetry.SENSOR_WBX_CHARGER_INFO_CPU_USAGE"`
+		WBXChargerInfoThreads     float64 `redis:"telemetry.SENSOR_WBX_CHARGER_INFO_THREADS"`
+		WBXChargerInfoMemory      float64 `redis:"telemetry.SENSOR_WBX_CHARGER_INFO_MEMORY"`
+		WBXChargerInfoSimpleState float64 `redis:"telemetry.SENSOR_WBX_CHARGER_INFO_SIMPLE_STATE"`
+
+		WPASupplicantCPUUsage    float64 `redis:"telemetry.SENSOR_WPA_SUPPLICANT_CPU_USAGE"`
+		WPASupplicantThreads     float64 `redis:"telemetry.SENSOR_WPA_SUPPLICANT_THREADS"`
+		WPASupplicantMemory      float64 `redis:"telemetry.SENSOR_WPA_SUPPLICANT_MEMORY"`
+		WPASupplicantSimpleState float64 `redis:"telemetry.SENSOR_WPA_SUPPLICANT_SIMPLE_STATE"`
+
+		NonWallboxCPUUsage    float64 `redis:"telemetry.SENSOR_NON_WALLBOX_CPU_USAGE"`
+		NonWallboxThreads     float64 `redis:"telemetry.SENSOR_NON_WALLBOX_THREADS"`
+		NonWallboxMemory      float64 `redis:"telemetry.SENSOR_NON_WALLBOX_MEMORY"`
+		NonWallboxSimpleState float64 `redis:"telemetry.SENSOR_NON_WALLBOX_SIMPLE_STATE"`
+
+		AvailableMemory      float64 `redis:"telemetry.SENSOR_AVAILABLE_MEMORY"`
+		CMAFreeMemory        float64 `redis:"telemetry.SENSOR_CMAFREE_MEMORY"`
+		AvailableStorageRoot float64 `redis:"telemetry.SENSOR_AVAILABLE_STORAGE_ROOTFS"`
+		CPUTemperature       float64 `redis:"telemetry.SENSOR_CPU_TEMPERATURE"`
+		SystemUptime         float64 `redis:"telemetry.SENSOR_SYSTEM_UPTIME"`
 	}
 }
 
@@ -579,6 +721,7 @@ func (w *Wallbox) StartRedisSubscriptions() {
 		"/wbx/telemetry/events",
 		"/wbx/charger_state_machine/events",
 		"/wbx/charging_regulation/in/session",
+		"/wbx/domain_bus/event/CHARGER_STATUS_CHANGED",
 	}
 
 	w.pubsub = w.redisClient.Subscribe(context.Background(), channels...)
@@ -592,6 +735,8 @@ func (w *Wallbox) StartRedisSubscriptions() {
 				w.ProcessTelemetryEvent(msg.Payload)
 			case "/wbx/charger_state_machine/events", "/wbx/charging_regulation/in/session":
 				w.ProcessSessionUpdateEvent(msg.Payload)
+			case "/wbx/domain_bus/event/CHARGER_STATUS_CHANGED":
+				w.ProcessChargerStatusEvent(msg.Payload)
 			}
 
 			if w.eventHandler != nil {
@@ -643,6 +788,18 @@ type SessionUpdateEvent struct {
 			ControlMode   string `json:"control_mode"`
 			ControlAction string `json:"control_action"`
 		} `json:"session"`
+	} `json:"body"`
+	Header struct {
+		MessageID string `json:"message_id"`
+		Source    string `json:"source"`
+		Timestamp string `json:"timestamp"`
+	} `json:"header"`
+}
+
+type ChargerStatusEvent struct {
+	Body struct {
+		OCPPStatusNumeric float64 `json:"ocpp_status"`
+		OCPPStatusString  string  `json:"ocpp_status_string"`
 	} `json:"body"`
 	Header struct {
 		MessageID string `json:"message_id"`
@@ -716,6 +873,31 @@ func (w *Wallbox) ProcessSessionUpdateEvent(payload string) {
 		w.SetTelemetryOCPPStatus(code)
 	} else {
 		log.Printf("Unmapped session state for OCPP status: %s", state)
+	}
+}
+
+func (w *Wallbox) ProcessChargerStatusEvent(payload string) {
+	var event ChargerStatusEvent
+	if err := json.Unmarshal([]byte(payload), &event); err != nil {
+		log.Printf("Error unmarshalling charger status event: %v", err)
+		return
+	}
+
+	if event.Header.MessageID != "CHARGER_STATUS_CHANGED" {
+		return
+	}
+
+	if event.Body.OCPPStatusNumeric != 0 {
+		w.SetTelemetryOCPPStatus(int(event.Body.OCPPStatusNumeric))
+		return
+	}
+
+	if event.Body.OCPPStatusString != "" {
+		if code, ok := ocppStatusCodeFromString(event.Body.OCPPStatusString); ok {
+			w.SetTelemetryOCPPStatus(code)
+		} else {
+			log.Printf("Unmapped OCPP status string from charger status event: %s", event.Body.OCPPStatusString)
+		}
 	}
 }
 

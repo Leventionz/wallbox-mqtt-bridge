@@ -1,3 +1,5 @@
+//go:build !linux
+
 package wallbox
 
 func mqOpen(path []byte) uintptr                  { return 0 }
