@@ -225,9 +225,12 @@ func LookupOCPPStatusCode(status string) (int, bool) {
 // ocppProblemStates captures the OCPP status codes that we consider
 // problematic when the control pilot reports a connected/charging state.
 // SuspendedEV/SuspendedEVSE are *not* treated as problems, because they
-// commonly represent a paused-but-healthy session.
+// commonly represent a paused-but-healthy session. Finishing is treated as
+// problematic so we can auto-heal when the backend thinks a session is ending
+// but the pilot still reports a connected/charging state.
 var ocppProblemStates = map[int]bool{
 	1: true, // Available – backend thinks connector is free while pilot says connected
+	6: true, // Finishing
 	8: true, // Unavailable
 	9: true, // Faulted
 }
