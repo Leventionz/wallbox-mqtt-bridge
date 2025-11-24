@@ -33,6 +33,11 @@ func RunBridge(configPath string) {
 	if c.Settings.OCPPRestartCooldown == 0 {
 		c.Settings.OCPPRestartCooldown = 600
 	}
+	if c.Settings.OCPPMaxRestarts <= 0 {
+		// Default to a small number of restart attempts before either giving up
+		// or escalating to a full reboot (if enabled).
+		c.Settings.OCPPMaxRestarts = 3
+	}
 
 	w := wallbox.New()
 	w.RefreshData()
@@ -63,6 +68,8 @@ func RunBridge(configPath string) {
 	ocppLastRestart := "never"
 	var mismatchStart time.Time
 	var lastRestart time.Time
+	var ocppRestartCount int
+	var lastFullReboot time.Time
 
 	entityConfig["ocpp_mismatch"] = Entity{
 		Component: "binary_sensor",
@@ -160,6 +167,7 @@ func RunBridge(configPath string) {
 			if pilotConnected && ocppIndicatesDisconnect {
 				if mismatchStart.IsZero() {
 					mismatchStart = now
+					ocppRestartCount = 0
 					log.Printf("OCPP mismatch detected: pilot=%d (%s), OCPP=%d (%s)", w.ControlPilotCode(), w.ControlPilotStatus(), ocppCode, w.OCPPStatusDescription())
 				}
 				ocppMismatchState = "1"
@@ -169,6 +177,7 @@ func RunBridge(configPath string) {
 				}
 				ocppMismatchState = "0"
 				mismatchStart = time.Time{}
+				ocppRestartCount = 0
 			}
 
 			if c.Settings.AutoRestartOCPP && ocppMismatchState == "1" && !mismatchStart.IsZero() {
@@ -176,14 +185,34 @@ func RunBridge(configPath string) {
 				cooldown := time.Duration(c.Settings.OCPPRestartCooldown) * time.Second
 
 				if now.Sub(mismatchStart) >= threshold && (lastRestart.IsZero() || now.Sub(lastRestart) >= cooldown) {
-					log.Printf("Restarting wallboxsmachine + ocppwallbox after %s mismatch (OCPP %d: %s)", now.Sub(mismatchStart).Round(time.Second), ocppCode, w.OCPPStatusDescription())
-					if err := restartCriticalServices(); err != nil {
-						log.Printf("Failed to restart charging stack: %v", err)
-						continue
+					// First try a bounded number of OCPP service restarts. If
+					// those do not clear the mismatch and full reboot is
+					// enabled, we can optionally escalate to a complete
+					// Wallbox reboot as a last resort.
+					if c.Settings.OCPPMaxRestarts == 0 || ocppRestartCount < c.Settings.OCPPMaxRestarts {
+						log.Printf("Restarting ocppwallbox.service after %s mismatch (OCPP %d: %s) [attempt %d/%d]",
+							now.Sub(mismatchStart).Round(time.Second), ocppCode, w.OCPPStatusDescription(), ocppRestartCount+1, c.Settings.OCPPMaxRestarts)
+						if err := restartCriticalServices(); err != nil {
+							log.Printf("Failed to restart charging stack: %v", err)
+							continue
+						}
+						ocppRestartCount++
+						lastRestart = now
+						mismatchStart = now
+						ocppLastRestart = now.Format(time.RFC3339)
+					} else if c.Settings.OCPPFullReboot {
+						// Only perform a full reboot if we have not recently done so.
+						if lastFullReboot.IsZero() || now.Sub(lastFullReboot) >= cooldown {
+							log.Printf("Escalating to full system reboot after %d failed OCPP restart attempts and %s mismatch (OCPP %d: %s)",
+								ocppRestartCount, now.Sub(mismatchStart).Round(time.Second), ocppCode, w.OCPPStatusDescription())
+							go func() {
+								if err := rebootSystem(); err != nil {
+									log.Printf("Failed to reboot system for OCPP heal: %v", err)
+								}
+							}()
+							lastFullReboot = now
+						}
 					}
-					lastRestart = now
-					mismatchStart = now
-					ocppLastRestart = now.Format(time.RFC3339)
 				}
 			}
 
@@ -214,7 +243,6 @@ func RunBridge(configPath string) {
 
 func restartCriticalServices() error {
 	services := []string{
-		"wallboxsmachine.service",
 		"ocppwallbox.service",
 	}
 
@@ -226,6 +254,14 @@ func restartCriticalServices() error {
 	}
 
 	return nil
+}
+
+// rebootSystem issues a full system reboot via systemd. This is used as an
+// optional last‑resort healing step when repeated service restarts have not
+// cleared a persistent OCPP/pilot mismatch. Use with care.
+func rebootSystem() error {
+	cmd := exec.Command("systemctl", "reboot")
+	return cmd.Run()
 }
 
 func bridgeVersion() string {

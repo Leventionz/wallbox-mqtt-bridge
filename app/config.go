@@ -20,6 +20,8 @@ type WallboxConfig struct {
 		AutoRestartOCPP        bool   `ini:"auto_restart_ocpp"`
 		OCPPMismatchSeconds    int    `ini:"ocpp_mismatch_seconds"`
 		OCPPRestartCooldown    int    `ini:"ocpp_restart_cooldown_seconds"`
+		OCPPMaxRestarts        int    `ini:"ocpp_max_restarts"`
+		OCPPFullReboot         bool   `ini:"ocpp_full_reboot"`
 	} `ini:"settings"`
 }
 

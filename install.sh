@@ -66,11 +66,24 @@ fi
 
 read -r -p "Enable automatic OCPP self-heal on pilot/OCPP mismatch? [y/N]: " enable_self_heal
 if [[ "$enable_self_heal" =~ ^[Yy]$ ]]; then
-    read -r -p "Seconds mismatch must persist before restart [60]: " mismatch_seconds
-    mismatch_seconds=${mismatch_seconds:-60}
-    read -r -p "Cooldown between restarts in seconds [600]: " cooldown_seconds
-    cooldown_seconds=${cooldown_seconds:-600}
-    update_settings_ini auto_restart_ocpp true ocpp_mismatch_seconds "$mismatch_seconds" ocpp_restart_cooldown_seconds "$cooldown_seconds" || true
+    read -r -p "Seconds mismatch must persist before restart [180]: " mismatch_seconds
+    mismatch_seconds=${mismatch_seconds:-180}
+    read -r -p "Cooldown between restarts in seconds [300]: " cooldown_seconds
+    cooldown_seconds=${cooldown_seconds:-300}
+    read -r -p "Maximum service restart attempts before giving up or escalating [3]: " max_restarts
+    max_restarts=${max_restarts:-3}
+    read -r -p "Allow full Wallbox reboot if restarts do not clear the mismatch? [y/N]: " enable_full_reboot
+    if [[ "$enable_full_reboot" =~ ^[Yy]$ ]]; then
+        full_reboot="true"
+    else
+        full_reboot="false"
+    fi
+    update_settings_ini \
+        auto_restart_ocpp true \
+        ocpp_mismatch_seconds "$mismatch_seconds" \
+        ocpp_restart_cooldown_seconds "$cooldown_seconds" \
+        ocpp_max_restarts "$max_restarts" \
+        ocpp_full_reboot "$full_reboot" || true
 else
     update_settings_ini auto_restart_ocpp false || true
 fi

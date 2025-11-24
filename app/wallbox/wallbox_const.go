@@ -222,14 +222,16 @@ func LookupOCPPStatusCode(status string) (int, bool) {
 	return ocppStatusCodeFromString(status)
 }
 
-var ocppStatusUnplugged = map[int]bool{
-	1: true, // Available – backend thinks connector is free
-	4: true, // SuspendedEVSE – EVSE paused session
-	5: true, // SuspendedEV – vehicle paused session
+// ocppProblemStates captures the OCPP status codes that we consider
+// problematic when the control pilot reports a connected/charging state.
+// SuspendedEV/SuspendedEVSE are *not* treated as problems, because they
+// commonly represent a paused-but-healthy session.
+var ocppProblemStates = map[int]bool{
+	1: true, // Available – backend thinks connector is free while pilot says connected
 	8: true, // Unavailable
 	9: true, // Faulted
 }
 
 func ocppStatusIndicatesDisconnect(code int) bool {
-	return ocppStatusUnplugged[code]
+	return ocppProblemStates[code]
 }
