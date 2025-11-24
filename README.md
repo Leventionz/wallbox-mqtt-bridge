@@ -69,7 +69,7 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 - **Cleaner telemetry + leaner HA entities** – every `SENSOR_*` resource metric (CPU usage, threads, memory, signal strength, etc.) is mapped into the Redis telemetry struct so log spam disappears, but only the useful ones are exposed in Home Assistant. Key sensors such as `sensor.wallbox_wifi_signal_strength` and `sensor.wallbox_ocpp_status` now appear in the main sensor list instead of being hidden as diagnostics, and redundant “raw” duplicates have been removed. Debug mode still has access to the raw values without bloating dashboards.
 - **Accurate version reporting** – builds embed the release tag plus the Git commit (e.g. `bridgechannels-2025.11.23+36fbf5e`), so both `sensor.wallbox_bridge_version` and the Home Assistant device `sw_version` tell you the exact binary + Wallbox firmware pair that is running.
 - **EVCC helper alignment** – the optional `evcc-wallbox.yaml` now references `control_pilot_state/state`, matching the SAE letter entity that the main dashboard uses, which makes EVCC’s status tracking clearer.
-- **Installer defaults to 60 s mismatch** – rerunning `install.sh` not only upgrades the binary but also keeps the safer 60 s mismatch default, tolerates missing services, and can regenerate the EVCC helper snippet on demand.
+- **Installer defaults to 180 s mismatch** – rerunning `install.sh` not only upgrades the binary but also keeps the safer 180 s mismatch default, tolerates missing services, and can regenerate the EVCC helper snippet on demand.
 
 ## OCPP self-healing & sensors
 
