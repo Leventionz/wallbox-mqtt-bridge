@@ -54,24 +54,14 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 > If you update your Wallbox beyond 6.7.x, simply redeploy using the installer command above to keep the telemetry fixes in place. The bridge auto-detects telemetry and switches to legacy data when telemetry is missing.
 
-## 6.7.33 bridge overview
+## Key highlights (bridgechannels-2025.12.06)
 
-- **True cable detection** – `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes (177/178/193/194/195).
-- **Live OCPP status** – `sensor.wallbox_ocpp_status` now follows the `ocppwallbox` `StatusNotification` log stream (parsed from journald) so it reports the same `status` values (Available/Preparing/Charging/SuspendedEV/…) that your OCPP backend sees. The legacy `/wbx/domain_bus/event/CHARGER_STATUS_CHANGED` feed is still cached for diagnostics, but its stale `ocpp_status` field is no longer used for the main sensor.
-- **Mismatch awareness + heal** – `binary_sensor.wallbox_ocpp_mismatch` flips on whenever the control pilot reports a connected/charging state but OCPP reports a **problem** status (Available/Finishing/Unavailable/Faulted). If auto-heal is enabled the bridge restarts `ocppwallbox.service` after `ocpp_mismatch_seconds` (default 60 s), up to `ocpp_max_restarts` times, and can optionally escalate to a full reboot if `ocpp_full_reboot = true`. All three sensors (`ocpp_status`, `ocpp_mismatch`, `ocpp_last_restart`) publish even when auto-heal is disabled. **DO NOT ENABLE THE AUTO-HEAL IF YOU DO NOT USE OCPP**
-- **Installer polish** – the refreshed `install.sh` tolerates missing services, fixes Python 3.5 `configparser` / `pathlib` issues, prompts for the auto-heal timers with defaults, and can optionally emit an EVCC-ready YAML snippet.
-- **Debug telemetry parity** – control-pilot voltages, duty cycle, and other `/wbx/telemetry/events` fields now populate on 6.7.33 just like 6.5/6.6, so historical dashboards survive the firmware jump.
-
-## Release highlights (bridgechannels-2025.12.06)
-
-- **Heal observability + graceful fallback** – OCPP self-heal now publishes action/detail/error/timestamp sensors (`ocpp_last_heal_action`, `ocpp_last_heal_detail`, `ocpp_last_heal_error`, `ocpp_last_heal_at`) and prefers a stop+start before restart, escalating to the vendor reboot flow only if needed. Version strings still embed the release tag and commit for traceability (e.g., `bridgechannels-2025.12.06+<commit>`).
-
-- **StatusNotification-aligned OCPP status** – `sensor.wallbox_ocpp_status` now parses the `StatusNotification` messages that `ocppwallbox` sends to the CS (`status: Available/Preparing/Charging/…`) and maps them onto the OCPP status table. If journald is unavailable it falls back to the Wallbox session events (Charging2, Connected5, Finish, etc.) and finally the telemetry `SENSOR_OCPP_STATUS` value, so the sensor remains usable even on older or non‑systemd setups.
-- **Accurate session energy** – `sensor.wallbox_added_energy` surfaces `active_session.energy_total` straight from MySQL, so you get the exact Wh the Wallbox reports without relying on telemetry baselines or reset heuristics.
-- **Cleaner telemetry + leaner HA entities** – every `SENSOR_*` resource metric (CPU usage, threads, memory, signal strength, etc.) is mapped into the Redis telemetry struct so log spam disappears, but only the useful ones are exposed in Home Assistant. Key sensors such as `sensor.wallbox_wifi_signal_strength` and `sensor.wallbox_ocpp_status` now appear in the main sensor list instead of being hidden as diagnostics, and redundant “raw” duplicates have been removed. Debug mode still has access to the raw values without bloating dashboards.
-- **Accurate version reporting** – builds embed the release tag plus the Git commit (e.g. `bridgechannels-2025.11.23+36fbf5e`), so both `sensor.wallbox_bridge_version` and the Home Assistant device `sw_version` tell you the exact binary + Wallbox firmware pair that is running.
-- **EVCC helper alignment** – the optional `evcc-wallbox.yaml` now references `control_pilot_state/state`, matching the SAE letter entity that the main dashboard uses, which makes EVCC’s status tracking clearer.
-- **Installer defaults to 180 s mismatch** – rerunning `install.sh` not only upgrades the binary but also keeps the safer 180 s mismatch default, tolerates missing services, and can regenerate the EVCC helper snippet on demand.
+- **Heal observability + graceful fallback** – OCPP self-heal now publishes action/detail/error/timestamp sensors (`ocpp_last_heal_action`, `ocpp_last_heal_detail`, `ocpp_last_heal_error`, `ocpp_last_heal_at`), prefers stop+start before restart, and only escalates to the Wallbox `reboot.sh` flow when needed.
+- **Live OCPP visibility** – `sensor.wallbox_ocpp_status` follows `ocppwallbox` StatusNotification logs; if journald is unavailable it falls back to Wallbox session events and finally telemetry `SENSOR_OCPP_STATUS`.
+- **Accurate energy + cable state** – `sensor.wallbox_added_energy` reads MySQL `active_session.energy_total`; `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes for true plug detection, with S2 relay and charging enable also driven from telemetry.
+- **Cleaner telemetry + leaner HA entities** – resource metrics are mapped without log spam; the main HA sensor set stays focused while debug mode exposes the rest.
+- **EVCC helper + installer polish** – optional EVCC snippet, tolerant installer defaults (180 s mismatch, cooldowns), and Python/systemd resilience.
+- **Traceable builds** – version strings embed the release tag and commit (e.g., `bridgechannels-2025.12.06+<commit>`) for clear sw_version reporting in HA.
 
 ## OCPP self-healing & sensors
 
