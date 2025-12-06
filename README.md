@@ -28,7 +28,7 @@ This open-source project connects your Wallbox fully locally to Home Assistant, 
 3. `ssh` to your Wallbox and run
 
 ```sh
-curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.11.23/install.sh > install.sh && bash install.sh
+curl -sSfL https://github.com/Leventionz/wallbox-mqtt-bridge/releases/download/bridgechannels-2025.12.06/install.sh > install.sh && bash install.sh
 ```
 
 Note: To upgrade to new version, simply run the command from step 3 again.
@@ -62,7 +62,9 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 - **Installer polish** – the refreshed `install.sh` tolerates missing services, fixes Python 3.5 `configparser` / `pathlib` issues, prompts for the auto-heal timers with defaults, and can optionally emit an EVCC-ready YAML snippet.
 - **Debug telemetry parity** – control-pilot voltages, duty cycle, and other `/wbx/telemetry/events` fields now populate on 6.7.33 just like 6.5/6.6, so historical dashboards survive the firmware jump.
 
-## Release highlights (bridgechannels-2025.11.23)
+## Release highlights (bridgechannels-2025.12.06)
+
+- **Heal observability + graceful fallback** – OCPP self-heal now publishes action/detail/error/timestamp sensors (`ocpp_last_heal_action`, `ocpp_last_heal_detail`, `ocpp_last_heal_error`, `ocpp_last_heal_at`) and prefers a stop+start before restart, escalating to the vendor reboot flow only if needed. Version strings still embed the release tag and commit for traceability (e.g., `bridgechannels-2025.12.06+<commit>`).
 
 - **StatusNotification-aligned OCPP status** – `sensor.wallbox_ocpp_status` now parses the `StatusNotification` messages that `ocppwallbox` sends to the CS (`status: Available/Preparing/Charging/…`) and maps them onto the OCPP status table. If journald is unavailable it falls back to the Wallbox session events (Charging2, Connected5, Finish, etc.) and finally the telemetry `SENSOR_OCPP_STATUS` value, so the sensor remains usable even on older or non‑systemd setups.
 - **Accurate session energy** – `sensor.wallbox_added_energy` surfaces `active_session.energy_total` straight from MySQL, so you get the exact Wh the Wallbox reports without relying on telemetry baselines or reset heuristics.
