@@ -66,6 +66,10 @@ func RunBridge(configPath string) {
 
 	ocppMismatchState := "0"
 	ocppLastRestart := "never"
+	ocppLastHealAction := "idle"
+	ocppLastHealError := ""
+	ocppLastHealAt := "never"
+	ocppLastHealDetail := ""
 	var mismatchStart time.Time
 	var lastRestart time.Time
 	var ocppRestartCount int
@@ -88,6 +92,52 @@ func RunBridge(configPath string) {
 		Getter:    func() string { return ocppLastRestart },
 		Config: map[string]string{
 			"name":            "OCPP last restart",
+			"entity_category": "diagnostic",
+		},
+	}
+
+	entityConfig["ocpp_last_heal_action"] = Entity{
+		Component: "sensor",
+		Getter:    func() string { return ocppLastHealAction },
+		Config: map[string]string{
+			"name":            "OCPP last heal action",
+			"entity_category": "diagnostic",
+		},
+	}
+
+	entityConfig["ocpp_last_heal_error"] = Entity{
+		Component: "sensor",
+		Getter:    func() string {
+			if ocppLastHealError == "" {
+				return "none"
+			}
+			return ocppLastHealError
+		},
+		Config: map[string]string{
+			"name":            "OCPP last heal error",
+			"entity_category": "diagnostic",
+		},
+	}
+
+	entityConfig["ocpp_last_heal_at"] = Entity{
+		Component: "sensor",
+		Getter:    func() string { return ocppLastHealAt },
+		Config: map[string]string{
+			"name":            "OCPP last heal at",
+			"entity_category": "diagnostic",
+		},
+	}
+
+	entityConfig["ocpp_last_heal_detail"] = Entity{
+		Component: "sensor",
+		Getter:    func() string {
+			if ocppLastHealDetail == "" {
+				return "none"
+			}
+			return ocppLastHealDetail
+		},
+		Config: map[string]string{
+			"name":            "OCPP last heal detail",
 			"entity_category": "diagnostic",
 		},
 	}
@@ -192,9 +242,19 @@ func RunBridge(configPath string) {
 					if c.Settings.OCPPMaxRestarts == 0 || ocppRestartCount < c.Settings.OCPPMaxRestarts {
 						log.Printf("Restarting ocppwallbox.service after %s mismatch (OCPP %d: %s) [attempt %d/%d]",
 							now.Sub(mismatchStart).Round(time.Second), ocppCode, w.OCPPStatusDescription(), ocppRestartCount+1, c.Settings.OCPPMaxRestarts)
-						if err := restartCriticalServices(); err != nil {
+						action, detail, err := restartCriticalServices()
+						ocppLastHealAction = action
+						ocppLastHealDetail = detail
+						ocppLastHealAt = now.Format(time.RFC3339)
+						if err != nil {
+							ocppLastHealError = detail
 							log.Printf("Failed to restart charging stack: %v", err)
 							continue
+						}
+						if action == "reboot" {
+							ocppLastHealError = detail
+						} else {
+							ocppLastHealError = ""
 						}
 						ocppRestartCount++
 						lastRestart = now
@@ -241,25 +301,68 @@ func RunBridge(configPath string) {
 	w.StopRedisSubscriptions()
 }
 
-func restartCriticalServices() error {
+func restartCriticalServices() (action string, detail string, err error) {
+	// Basic dependency sanity checks. If Redis/MySQL are down, restarting OCPP
+	// will likely flap; log but do not block the heal.
+	checkService := func(name string) {
+		if err := exec.Command("systemctl", "is-active", "--quiet", name).Run(); err != nil {
+			log.Printf("warning: dependency %s is not active: %v", name, err)
+		}
+	}
+	checkService("redis.service")
+	checkService("mysqld.service")
+
 	services := []string{
 		"ocppwallbox.service",
 	}
 
 	for _, svc := range services {
-		cmd := exec.Command("systemctl", "restart", svc)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("restart %s: %w", svc, err)
+		// Prefer a graceful stop + start to let the service flush state.
+		stopCmd := exec.Command("systemctl", "stop", svc)
+		startCmd := exec.Command("systemctl", "start", svc)
+
+		stopErr := stopCmd.Run()
+		if stopErr == nil {
+			log.Printf("heal: stopped %s", svc)
+			if startErr := startCmd.Run(); startErr == nil {
+				log.Printf("heal: started %s", svc)
+				return "stop_start", fmt.Sprintf("%s stopped+started", svc), nil
+			}
+			log.Printf("heal: start %s failed after stop, will retry with restart", svc)
+		} else {
+			log.Printf("heal: stop %s failed (%v), will retry with restart", svc, stopErr)
 		}
+
+		// If stop/start fails, fall back to a direct restart.
+		restartCmd := exec.Command("systemctl", "restart", svc)
+		if err := restartCmd.Run(); err != nil {
+			// As a final safeguard, invoke the Wallbox reboot flow.
+			log.Printf("restart %s failed (%v); escalating to full reboot", svc, err)
+			if rebootErr := rebootSystem(); rebootErr != nil {
+				return "reboot", fmt.Sprintf("reboot failed after restart error: %v", rebootErr), rebootErr
+			}
+			return "reboot", "reboot issued after restart failure", nil
+		}
+		log.Printf("heal: restarted %s via systemctl restart", svc)
+		return "restart", fmt.Sprintf("%s restarted", svc), nil
 	}
 
-	return nil
+	return "noop", "no services to restart", nil
 }
 
-// rebootSystem issues a full system reboot via systemd. This is used as an
-// optional last‑resort healing step when repeated service restarts have not
-// cleared a persistent OCPP/pilot mismatch. Use with care.
+// rebootSystem triggers the Wallbox-provided reboot flow. Prefer the vendor
+// script for a graceful shutdown sequence (flush telemetry, stop services per
+// config) and fall back to a raw systemd reboot if unavailable. This is used
+// as an optional last‑resort healing step when repeated service restarts have
+// not cleared a persistent OCPP/pilot mismatch. Use with care.
 func rebootSystem() error {
+	// Preferred: Wallbox official reboot wrapper.
+	scriptCmd := exec.Command("/home/root/.wallbox/reboot.sh")
+	if err := scriptCmd.Run(); err == nil {
+		return nil
+	}
+
+	// Fallback: direct systemd reboot.
 	cmd := exec.Command("systemctl", "reboot")
 	return cmd.Run()
 }
