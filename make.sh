@@ -3,7 +3,7 @@ set -x
 VERSION="${BRIDGE_VERSION:-}"
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 DIRTY=""
-if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+if [ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ]; then
     DIRTY="+dirty"
 fi
 

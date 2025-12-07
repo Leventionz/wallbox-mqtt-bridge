@@ -75,8 +75,10 @@ else
 fi
 
 echo
-echo "OCPP auto-heal will restart ocppwallbox when the control pilot is connected/charging"
-echo "but OCPP reports a problem status (e.g., Available/Finishing/Unavailable/Faulted)."
+echo "OCPP auto-heal targets third-party OCPP backends (e.g., vendor/partner WSS)."
+echo "It will NOT help when using Home Assistant's OCPP integration."
+echo "When the control pilot is connected/charging but OCPP reports a problem status"
+echo "(e.g., Available/Finishing/Unavailable/Faulted), the bridge restarts ocppwallbox."
 echo "You can cap attempts and optionally allow a full reboot if restarts do not recover."
 echo
 

@@ -70,7 +70,6 @@ func RunBridge(configPath string) {
 	ocppMismatchState := "0"
 	ocppLastRestart := "never"
 	ocppLastHealAction := "idle"
-	ocppLastHealError := ""
 	ocppLastHealAt := "never"
 	ocppLastHealDetail := ""
 	var mismatchStart time.Time
@@ -260,14 +259,8 @@ func RunBridge(configPath string) {
 						ocppLastHealDetail = detail
 						ocppLastHealAt = now.Format(time.RFC3339)
 						if err != nil {
-							ocppLastHealError = detail
 							log.Printf("Failed to restart charging stack: %v", err)
 							continue
-						}
-						if action == "reboot" {
-							ocppLastHealError = detail
-						} else {
-							ocppLastHealError = ""
 						}
 						ocppRestartCount++
 						lastRestart = now
