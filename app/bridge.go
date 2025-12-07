@@ -38,6 +38,9 @@ func RunBridge(configPath string) {
 		// or escalating to a full reboot (if enabled).
 		c.Settings.OCPPMaxRestarts = 3
 	}
+	if c.Settings.PilotErrorSeconds == 0 {
+		c.Settings.PilotErrorSeconds = 300
+	}
 
 	w := wallbox.New()
 	w.RefreshData()
@@ -74,6 +77,8 @@ func RunBridge(configPath string) {
 	var lastRestart time.Time
 	var ocppRestartCount int
 	var lastFullReboot time.Time
+	var pilotErrorStart time.Time
+	var lastPilotErrorReboot time.Time
 
 	entityConfig["ocpp_mismatch"] = Entity{
 		Component: "binary_sensor",
@@ -96,6 +101,28 @@ func RunBridge(configPath string) {
 		},
 	}
 
+	entityConfig["ocpp_enabled"] = Entity{
+		Component: "binary_sensor",
+		Getter:    w.OCPPEnabled,
+		Config: map[string]string{
+			"name":         "OCPP enabled",
+			"payload_on":   "1",
+			"payload_off":  "0",
+			"device_class": "power",
+		},
+	}
+
+	entityConfig["ocpp_connected"] = Entity{
+		Component: "binary_sensor",
+		Getter:    w.OCPPConnected,
+		Config: map[string]string{
+			"name":         "OCPP connected",
+			"payload_on":   "1",
+			"payload_off":  "0",
+			"device_class": "connectivity",
+		},
+	}
+
 	entityConfig["ocpp_last_heal_action"] = Entity{
 		Component: "sensor",
 		Getter:    func() string { return ocppLastHealAction },
@@ -107,7 +134,7 @@ func RunBridge(configPath string) {
 
 	entityConfig["ocpp_last_heal_error"] = Entity{
 		Component: "sensor",
-		Getter:    func() string {
+		Getter: func() string {
 			if ocppLastHealError == "" {
 				return "none"
 			}
@@ -130,7 +157,7 @@ func RunBridge(configPath string) {
 
 	entityConfig["ocpp_last_heal_detail"] = Entity{
 		Component: "sensor",
-		Getter:    func() string {
+		Getter: func() string {
 			if ocppLastHealDetail == "" {
 				return "none"
 			}
@@ -273,6 +300,30 @@ func RunBridge(configPath string) {
 							lastFullReboot = now
 						}
 					}
+				}
+			}
+
+			// Independent safety net: if control pilot reports error state 14 for a sustained period, reboot.
+			if c.Settings.PilotErrorReboot {
+				if w.ControlPilotCode() == 14 {
+					if pilotErrorStart.IsZero() {
+						pilotErrorStart = now
+						log.Printf("Control pilot entered error state 14; starting reboot timer (%ds)", c.Settings.PilotErrorSeconds)
+					}
+					if now.Sub(pilotErrorStart) >= time.Duration(c.Settings.PilotErrorSeconds)*time.Second {
+						if lastPilotErrorReboot.IsZero() || now.Sub(lastPilotErrorReboot) >= time.Duration(c.Settings.PilotErrorSeconds)*time.Second {
+							log.Printf("Rebooting due to sustained control pilot error state 14 for %s", now.Sub(pilotErrorStart).Round(time.Second))
+							go func() {
+								if err := rebootSystem(); err != nil {
+									log.Printf("Failed to reboot after control pilot error: %v", err)
+								}
+							}()
+							lastPilotErrorReboot = now
+							pilotErrorStart = time.Time{}
+						}
+					}
+				} else {
+					pilotErrorStart = time.Time{}
 				}
 			}
 

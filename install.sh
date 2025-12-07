@@ -88,6 +88,15 @@ else
     update_settings_ini auto_restart_ocpp false || true
 fi
 
+read -r -p "Reboot if control pilot stays in error state 14 for 5 minutes? [y/N]: " enable_pilot_error_reboot
+if [[ "$enable_pilot_error_reboot" =~ ^[Yy]$ ]]; then
+    read -r -p "Seconds in control pilot error 14 before reboot [300]: " pilot_error_seconds
+    pilot_error_seconds=${pilot_error_seconds:-300}
+    update_settings_ini pilot_error_reboot true pilot_error_seconds "$pilot_error_seconds" || true
+else
+    update_settings_ini pilot_error_reboot false || true
+fi
+
 # Optional EVCC helper
 read -r -p "Generate EVCC sample configuration? [y/N]: " enable_evcc
 if [[ "$enable_evcc" =~ ^[Yy]$ ]]; then

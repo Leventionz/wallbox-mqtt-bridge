@@ -657,6 +657,32 @@ func (w *Wallbox) SetTelemetryOCPPStatus(code int) {
 	w.ocppStatusMux.Unlock()
 }
 
+// OCPPOnlineCode reads the Wallbox redis flag that indicates OCPP online state.
+// 4 typically means connected; 1/2 indicate problems; 0/absent often mean disabled.
+func (w *Wallbox) OCPPOnlineCode() int {
+	val, err := w.redisClient.Get(context.Background(), "wallbox:ocpp::online").Int()
+	if err != nil {
+		return -1
+	}
+	return val
+}
+
+// OCPPEnabled reports whether OCPP is enabled (any non-zero online flag).
+func (w *Wallbox) OCPPEnabled() string {
+	if code := w.OCPPOnlineCode(); code > 0 {
+		return "1"
+	}
+	return "0"
+}
+
+// OCPPConnected reports whether OCPP is connected to the backend (online flag == 4).
+func (w *Wallbox) OCPPConnected() string {
+	if w.OCPPOnlineCode() == 4 {
+		return "1"
+	}
+	return "0"
+}
+
 func (w *Wallbox) getTelemetryOCPPStatus() (int, bool) {
 	w.ocppStatusMux.RLock()
 	code := w.telemetryOCPPStatus
@@ -811,10 +837,10 @@ func (w *Wallbox) StartOCPPJournalWatcher() {
 
 		cmd := exec.Command("journalctl",
 			"-u", "ocppwallbox.service",
-			"-f",          // follow new entries
-			"-n", "0",     // do not replay historical logs
-			"-o", "cat",   // message only, no metadata
-			"-q",          // quiet
+			"-f",      // follow new entries
+			"-n", "0", // do not replay historical logs
+			"-o", "cat", // message only, no metadata
+			"-q", // quiet
 		)
 
 		stdout, err := cmd.StdoutPipe()

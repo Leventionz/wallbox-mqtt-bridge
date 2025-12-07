@@ -22,6 +22,8 @@ type WallboxConfig struct {
 		OCPPRestartCooldown    int    `ini:"ocpp_restart_cooldown_seconds"`
 		OCPPMaxRestarts        int    `ini:"ocpp_max_restarts"`
 		OCPPFullReboot         bool   `ini:"ocpp_full_reboot"`
+		PilotErrorReboot       bool   `ini:"pilot_error_reboot"`
+		PilotErrorSeconds      int    `ini:"pilot_error_seconds"`
 	} `ini:"settings"`
 }
 

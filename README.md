@@ -56,11 +56,11 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 
 ## Key highlights (bridgechannels-2025.12.06)
 
-- **Heal observability + graceful fallback** – OCPP self-heal now publishes action/detail/error/timestamp sensors (`ocpp_last_heal_action`, `ocpp_last_heal_detail`, `ocpp_last_heal_error`, `ocpp_last_heal_at`), prefers stop+start before restart, and only escalates to the Wallbox `reboot.sh` flow when needed.
+- **Heal observability + graceful fallback** – OCPP self-heal now publishes action/detail/error/timestamp sensors (`ocpp_last_heal_action`, `ocpp_last_heal_detail`, `ocpp_last_heal_error`, `ocpp_last_heal_at`), prefers stop+start before restart, and only escalates to the Wallbox `reboot.sh` flow when needed. New OCPP enable/connected binary sensors surface backend connectivity.
 - **Live OCPP visibility** – `sensor.wallbox_ocpp_status` follows `ocppwallbox` StatusNotification logs; if journald is unavailable it falls back to Wallbox session events and finally telemetry `SENSOR_OCPP_STATUS`.
 - **Accurate energy + cable state** – `sensor.wallbox_added_energy` reads MySQL `active_session.energy_total`; `binary_sensor.wallbox_cable_connected` keys off telemetry control-pilot codes for true plug detection, with S2 relay and charging enable also driven from telemetry.
 - **Cleaner telemetry + leaner HA entities** – resource metrics are mapped without log spam; the main HA sensor set stays focused while debug mode exposes the rest.
-- **EVCC helper + installer polish** – optional EVCC snippet, tolerant installer defaults (180 s mismatch, cooldowns), and Python/systemd resilience.
+- **EVCC helper + installer polish** – optional EVCC snippet, tolerant installer defaults (180 s mismatch, cooldowns), and Python/systemd resilience. Optional safeguard: reboot the Wallbox if control pilot error 14 persists (configurable timer).
 - **Traceable builds** – version strings embed the release tag and commit (e.g., `bridgechannels-2025.12.06+<commit>`) for clear sw_version reporting in HA.
 
 ## OCPP self-healing & sensors
