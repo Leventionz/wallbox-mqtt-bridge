@@ -221,10 +221,9 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 				}()
 			},
 			Config: map[string]string{
-				"name":            "Restart Wallbox",
-				"entity_category": "diagnostic",
-				"icon":            "mdi:restart",
-				"payload_press":   "PRESS",
+				"name":          "Restart Wallbox",
+				"icon":          "mdi:restart",
+				"payload_press": "PRESS",
 			},
 		},
 		"status": {
