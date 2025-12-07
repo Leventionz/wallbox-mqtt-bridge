@@ -286,7 +286,7 @@ func describeControlMode(code int) string {
 }
 
 var scheduleStatusDescriptions = map[int]string{
-	0: "Unknown",
+	0: "Inactive",
 }
 
 func describeScheduleStatus(code int) string {
@@ -297,7 +297,7 @@ func describeScheduleStatus(code int) string {
 }
 
 var ecosmartStatusDescriptions = map[int]string{
-	0: "Unknown",
+	0: "Off",
 }
 
 func describeEcosmartStatus(code int) string {
@@ -308,7 +308,8 @@ func describeEcosmartStatus(code int) string {
 }
 
 var powerBoostStatusDescriptions = map[int]string{
-	0: "Unknown",
+	0: "Off",
+	2: "Active", // observed
 }
 
 func describePowerBoostStatus(code int) string {
@@ -319,7 +320,7 @@ func describePowerBoostStatus(code int) string {
 }
 
 var powerSharingStatusDescriptions = map[int]string{
-	0: "Unknown",
+	0: "Off/Not sharing",
 }
 
 func describePowerSharingStatus(code int) string {
@@ -331,6 +332,7 @@ func describePowerSharingStatus(code int) string {
 
 var midStatusDescriptions = map[int]string{
 	0: "Unknown",
+	1: "Active", // observed
 }
 
 func describeMIDStatus(code int) string {
@@ -341,7 +343,7 @@ func describeMIDStatus(code int) string {
 }
 
 var powerRelayCommandDescriptions = map[int]string{
-	0: "Unknown",
+	0: "Idle",
 }
 
 func describePowerRelayCommand(code int) string {
