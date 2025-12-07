@@ -268,7 +268,7 @@ func describeConnectivityStatus(code int) string {
 	if desc, ok := connectivityStatusDescriptions[code]; ok {
 		return desc
 	}
-	return fmt.Sprintf("Unknown (%d)", code)
+	return fmt.Sprintf("%d", code)
 }
 
 var controlModeDescriptions = map[int]string{
@@ -282,7 +282,7 @@ func describeControlMode(code int) string {
 	if desc, ok := controlModeDescriptions[code]; ok {
 		return desc
 	}
-	return fmt.Sprintf("Unknown (%d)", code)
+	return fmt.Sprintf("%d", code)
 }
 
 var scheduleStatusDescriptions = map[int]string{
