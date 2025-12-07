@@ -4,7 +4,7 @@ This open-source project connects your Wallbox fully locally to Home Assistant, 
 
 > adds full telemetry support for firmware 6.7.x+ (control pilot, state machine, session energy, Power Boost, etc.) and tries to keep older firmware working automatically via legacy fallbacks.
 
-> **Please note this is only tested against firmware 6.7.33 on the Pulsar Plus; whilst I have tried to retain backward comptability it is likely you may have issues with some sensor readings if different**
+> **Please note this is only tested against firmware 6.7.33 and 6.7.36 on the Pulsar Plus; it should work across 6.7.x as long as Wallbox does not introduce breaking changes, but some sensor readings may vary on other versions.**
 
 ## Features
 
@@ -62,6 +62,13 @@ Note: To upgrade to new version, simply run the command from step 3 again.
 - **Cleaner telemetry + leaner HA entities** – resource metrics are mapped without log spam; the main HA sensor set stays focused while debug mode exposes the rest.
 - **EVCC helper + installer polish** – optional EVCC snippet, tolerant installer defaults (180 s mismatch, cooldowns), and Python/systemd resilience. Optional safeguard: reboot the Wallbox if control pilot error 14 persists (configurable timer).
 - **Traceable builds** – version strings embed the release tag and commit (e.g., `bridgechannels-2025.12.06+<commit>`) for clear sw_version reporting in HA.
+
+## Release notes (bridgechannels-2025.12.06)
+
+- Added OCPP connectivity diagnostics: `binary_sensor.wallbox_ocpp_enabled` and `binary_sensor.wallbox_ocpp_connected` (uses Wallbox redis `wallbox:ocpp::online`).
+- Added pilot error safeguard: optional reboot if control pilot stays in error state 14 for a configurable duration (default 5 minutes) via `pilot_error_reboot` / `pilot_error_seconds` in `install.sh`.
+- Heal observability: OCPP self-heal publishes action/detail/error/timestamp sensors and prefers stop+start before restart, escalating to vendor `reboot.sh` only if needed.
+- Rebuilt armhf/arm64 binaries with embedded version tag/commit.
 
 ## OCPP self-healing & sensors
 
