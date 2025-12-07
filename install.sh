@@ -64,6 +64,14 @@ if [ ! -e "$INI_FILE" ]; then
     ./bridge --config
 fi
 
+# Optional: enable diagnostic/debug sensors in Home Assistant
+read -r -p "Expose diagnostic/debug sensors in Home Assistant? [y/N]: " enable_debug_sensors
+if [[ "$enable_debug_sensors" =~ ^[Yy]$ ]]; then
+    update_settings_ini debug_sensors true || true
+else
+    update_settings_ini debug_sensors false || true
+fi
+
 # Pilot error safeguard prompt (before OCPP heal, as it is a broader safety net)
 read -r -p "Reboot if control pilot stays in error state? [y/N]: " enable_pilot_error_reboot
 if [[ "$enable_pilot_error_reboot" =~ ^[Yy]$ ]]; then
