@@ -1,5 +1,7 @@
 package wallbox
 
+import "fmt"
+
 var wallboxStatusCodes = []string{
 	"Ready",
 	"Charging",
@@ -278,6 +280,72 @@ var controlModeDescriptions = map[int]string{
 
 func describeControlMode(code int) string {
 	if desc, ok := controlModeDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var scheduleStatusDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describeScheduleStatus(code int) string {
+	if desc, ok := scheduleStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var ecosmartStatusDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describeEcosmartStatus(code int) string {
+	if desc, ok := ecosmartStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var powerBoostStatusDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describePowerBoostStatus(code int) string {
+	if desc, ok := powerBoostStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var powerSharingStatusDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describePowerSharingStatus(code int) string {
+	if desc, ok := powerSharingStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var midStatusDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describeMIDStatus(code int) string {
+	if desc, ok := midStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var powerRelayCommandDescriptions = map[int]string{
+	0: "Unknown",
+}
+
+func describePowerRelayCommand(code int) string {
+	if desc, ok := powerRelayCommandDescriptions[code]; ok {
 		return desc
 	}
 	return fmt.Sprintf("Unknown (%d)", code)

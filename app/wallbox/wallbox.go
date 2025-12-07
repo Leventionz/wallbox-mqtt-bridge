@@ -707,6 +707,48 @@ func (w *Wallbox) ControlMode() string {
 	return describeControlMode(code)
 }
 
+func (w *Wallbox) ScheduleStatus() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describeScheduleStatus(int(w.Data.RedisTelemetry.ScheduleStatus))
+}
+
+func (w *Wallbox) EcosmartStatus() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describeEcosmartStatus(int(w.Data.RedisTelemetry.EcosmartStatus))
+}
+
+func (w *Wallbox) PowerBoostStatus() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describePowerBoostStatus(int(w.Data.RedisTelemetry.PowerboostStatus))
+}
+
+func (w *Wallbox) PowerSharingStatus() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describePowerSharingStatus(int(w.Data.RedisTelemetry.PowerSharingStatus))
+}
+
+func (w *Wallbox) MIDStatus() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describeMIDStatus(int(w.Data.RedisTelemetry.MidStatus))
+}
+
+func (w *Wallbox) PowerRelayCommand() string {
+	if !w.HasTelemetry {
+		return "Unknown"
+	}
+	return describePowerRelayCommand(int(w.Data.RedisTelemetry.PowerRelayManagementCommand))
+}
+
 func (w *Wallbox) getTelemetryOCPPStatus() (int, bool) {
 	w.ocppStatusMux.RLock()
 	code := w.telemetryOCPPStatus

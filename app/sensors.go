@@ -574,7 +574,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"ecosmart_status": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.EcosmartStatus) },
+			Getter:    w.EcosmartStatus,
 			Config: map[string]string{
 				"name":            "EcoSmart Status",
 				"icon":            "mdi:leaf",
@@ -715,7 +715,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		// Schedule and PowerBoost
 		"schedule_status": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ScheduleStatus) },
+			Getter:    w.ScheduleStatus,
 			Config: map[string]string{
 				"name":            "Schedule Status",
 				"icon":            "mdi:calendar-clock",
@@ -737,7 +737,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"powerboost_status": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.PowerboostStatus) },
+			Getter:    w.PowerBoostStatus,
 			Config: map[string]string{
 				"name":            "PowerBoost Status",
 				"entity_category": "diagnostic",
@@ -810,7 +810,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"mid_status": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.MidStatus) },
+			Getter:    w.MIDStatus,
 			Config: map[string]string{
 				"name":            "MID Status",
 				"entity_category": "diagnostic",
