@@ -683,6 +683,30 @@ func (w *Wallbox) OCPPConnected() string {
 	return "0"
 }
 
+func (w *Wallbox) ConnectionType() string {
+	if !w.HasTelemetry || w.Data.RedisTelemetry.ConnectionType == 0 {
+		return "Unknown"
+	}
+	code := int(w.Data.RedisTelemetry.ConnectionType)
+	return describeConnectionType(code)
+}
+
+func (w *Wallbox) ConnectivityStatus() string {
+	if !w.HasTelemetry || w.Data.RedisTelemetry.ConnectivityStatus == 0 {
+		return "Unknown"
+	}
+	code := int(w.Data.RedisTelemetry.ConnectivityStatus)
+	return describeConnectivityStatus(code)
+}
+
+func (w *Wallbox) ControlMode() string {
+	if !w.HasTelemetry || w.Data.RedisTelemetry.ControlMode == 0 {
+		return "Unknown"
+	}
+	code := int(w.Data.RedisTelemetry.ControlMode)
+	return describeControlMode(code)
+}
+
 func (w *Wallbox) getTelemetryOCPPStatus() (int, bool) {
 	w.ocppStatusMux.RLock()
 	code := w.telemetryOCPPStatus

@@ -132,20 +132,6 @@ func RunBridge(configPath string) {
 		},
 	}
 
-	entityConfig["ocpp_last_heal_error"] = Entity{
-		Component: "sensor",
-		Getter: func() string {
-			if ocppLastHealError == "" {
-				return "none"
-			}
-			return ocppLastHealError
-		},
-		Config: map[string]string{
-			"name":            "OCPP last heal error",
-			"entity_category": "diagnostic",
-		},
-	}
-
 	entityConfig["ocpp_last_heal_at"] = Entity{
 		Component: "sensor",
 		Getter:    func() string { return ocppLastHealAt },

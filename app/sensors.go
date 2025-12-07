@@ -852,7 +852,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"control_mode": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ControlMode) },
+			Getter:    w.ControlMode,
 			Config: map[string]string{
 				"name":            "Control Mode",
 				"entity_category": "diagnostic",
@@ -860,7 +860,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"connectivity_status": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ConnectivityStatus) },
+			Getter:    w.ConnectivityStatus,
 			Config: map[string]string{
 				"name":            "Connectivity Status",
 				"entity_category": "diagnostic",
@@ -886,7 +886,7 @@ func getTelemetryEventEntities(w *wallbox.Wallbox) map[string]Entity {
 		},
 		"connection_type": {
 			Component: "sensor",
-			Getter:    func() string { return fmt.Sprint(w.Data.RedisTelemetry.ConnectionType) },
+			Getter:    w.ConnectionType,
 			Config: map[string]string{
 				"name":            "Connection Type",
 				"entity_category": "diagnostic",

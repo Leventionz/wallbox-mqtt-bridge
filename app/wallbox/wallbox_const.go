@@ -238,3 +238,47 @@ var ocppProblemStates = map[int]bool{
 func ocppStatusIndicatesDisconnect(code int) bool {
 	return ocppProblemStates[code]
 }
+
+// Connection type / connectivity / control mode mappings are derived from
+// observed Wallbox telemetry. Unknown codes fall back to "Unknown (<code>)".
+var connectionTypeDescriptions = map[int]string{
+	0: "Unknown",
+	1: "Wi-Fi",
+	2: "Ethernet",
+	3: "GSM",
+}
+
+func describeConnectionType(code int) string {
+	if desc, ok := connectionTypeDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var connectivityStatusDescriptions = map[int]string{
+	0: "Unknown",
+	1: "Online",
+	2: "Degraded",
+	3: "Offline",
+}
+
+func describeConnectivityStatus(code int) string {
+	if desc, ok := connectivityStatusDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
+
+var controlModeDescriptions = map[int]string{
+	0: "Unknown",
+	1: "Local",
+	2: "Remote/OCPP",
+	3: "Smart/Managed",
+}
+
+func describeControlMode(code int) string {
+	if desc, ok := controlModeDescriptions[code]; ok {
+		return desc
+	}
+	return fmt.Sprintf("Unknown (%d)", code)
+}
