@@ -64,6 +64,22 @@ if [ ! -e "$INI_FILE" ]; then
     ./bridge --config
 fi
 
+# Pilot error safeguard prompt (before OCPP heal, as it is a broader safety net)
+read -r -p "Reboot if control pilot stays in error state? [y/N]: " enable_pilot_error_reboot
+if [[ "$enable_pilot_error_reboot" =~ ^[Yy]$ ]]; then
+    read -r -p "Seconds in control pilot error before reboot [300]: " pilot_error_seconds
+    pilot_error_seconds=${pilot_error_seconds:-300}
+    update_settings_ini pilot_error_reboot true pilot_error_seconds "$pilot_error_seconds" || true
+else
+    update_settings_ini pilot_error_reboot false || true
+fi
+
+echo
+echo "OCPP auto-heal will restart ocppwallbox when the control pilot is connected/charging"
+echo "but OCPP reports a problem status (e.g., Available/Finishing/Unavailable/Faulted)."
+echo "You can cap attempts and optionally allow a full reboot if restarts do not recover."
+echo
+
 read -r -p "Enable automatic OCPP self-heal on pilot/OCPP mismatch? [y/N]: " enable_self_heal
 if [[ "$enable_self_heal" =~ ^[Yy]$ ]]; then
     read -r -p "Seconds mismatch must persist before restart [180]: " mismatch_seconds
@@ -86,15 +102,6 @@ if [[ "$enable_self_heal" =~ ^[Yy]$ ]]; then
         ocpp_full_reboot "$full_reboot" || true
 else
     update_settings_ini auto_restart_ocpp false || true
-fi
-
-read -r -p "Reboot if control pilot stays in error state 14 for 5 minutes? [y/N]: " enable_pilot_error_reboot
-if [[ "$enable_pilot_error_reboot" =~ ^[Yy]$ ]]; then
-    read -r -p "Seconds in control pilot error 14 before reboot [300]: " pilot_error_seconds
-    pilot_error_seconds=${pilot_error_seconds:-300}
-    update_settings_ini pilot_error_reboot true pilot_error_seconds "$pilot_error_seconds" || true
-else
-    update_settings_ini pilot_error_reboot false || true
 fi
 
 # Optional EVCC helper
