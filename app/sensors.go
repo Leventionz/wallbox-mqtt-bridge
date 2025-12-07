@@ -2,6 +2,7 @@ package bridge
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"wallbox-mqtt-bridge/app/ratelimit"
@@ -207,6 +208,23 @@ func getEntities(w *wallbox.Wallbox) map[string]Entity {
 				"max":                 fmt.Sprint(w.AvailableCurrent()),
 				"unit_of_measurement": "A",
 				"device_class":        "current",
+			},
+		},
+		"restart_wallbox": {
+			Component: "button",
+			Getter:    func() string { return "" }, // stateless button
+			Setter: func(_ string) {
+				go func() {
+					if err := rebootSystem(); err != nil {
+						log.Printf("Failed to reboot Wallbox via restart button: %v", err)
+					}
+				}()
+			},
+			Config: map[string]string{
+				"name":            "Restart Wallbox",
+				"entity_category": "diagnostic",
+				"icon":            "mdi:restart",
+				"payload_press":   "PRESS",
 			},
 		},
 		"status": {
