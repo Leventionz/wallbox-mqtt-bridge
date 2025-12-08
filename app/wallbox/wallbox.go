@@ -692,7 +692,7 @@ func (w *Wallbox) ConnectionType() string {
 }
 
 func (w *Wallbox) ConnectivityStatus() string {
-	if !w.HasTelemetry || w.Data.RedisTelemetry.ConnectivityStatus == 0 {
+	if !w.HasTelemetry {
 		return "Unknown"
 	}
 	code := int(w.Data.RedisTelemetry.ConnectivityStatus)
@@ -700,7 +700,7 @@ func (w *Wallbox) ConnectivityStatus() string {
 }
 
 func (w *Wallbox) ControlMode() string {
-	if !w.HasTelemetry || w.Data.RedisTelemetry.ControlMode == 0 {
+	if !w.HasTelemetry {
 		return "Unknown"
 	}
 	code := int(w.Data.RedisTelemetry.ControlMode)

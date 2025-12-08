@@ -316,7 +316,7 @@ func describePowerBoostStatus(code int) string {
 	if desc, ok := powerBoostStatusDescriptions[code]; ok {
 		return desc
 	}
-	return fmt.Sprintf("Unknown (%d)", code)
+	return fmt.Sprintf("%d", code)
 }
 
 var powerSharingStatusDescriptions = map[int]string{
